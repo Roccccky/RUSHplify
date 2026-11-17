@@ -1,0 +1,140 @@
+/* RUSHplify design tokens.
+   Surfaces, type and highlight follow NAMplify (flat metal greys, monospace, one red highlight).
+   Block category colours follow HeadRush (domain/block-categories.ts).
+   RUSHplify has one colour mode (grey). The older workspace variables below are remapped so those
+   workspaces pick up the flat look before they are rebuilt room by room. */
+
+:root {
+  --rp-m0: #0d0d0d;
+  --rp-m1: #121212;
+  --rp-m2: #1a1a1a;
+  --rp-m3: #1e1e1e;
+  --rp-m4: #2a2a2a;
+  --rp-m5: #333333;
+  --rp-well: #0c0c0c;
+  --rp-well-edge: #2d2d2d;
+  --rp-ink: #e8e8e8;
+  --rp-dim: #a3a3a3;
+  --rp-far: #858585;
+  --rp-off: #4c4c4c;
+  --rp-hl: #d0423a;
+  --rp-hl-ink: #ec6a61;
+  /* Turquoise accent, used sparingly: selection and focus only (active room/section, focus ring,
+     selected chain block). Never for surfaces, borders at rest, text blocks or gradients. */
+  --rp-acc: #4fc8d2;
+  --rp-acc-rgb: 79, 200, 210;
+  --rp-ok: #4caf6d;
+  --rp-warn: #d9a520;
+  /* NAMplify parts (theme.css): card shell, wells, raised parts, screen, highlight fill */
+  --rp-shell-top: #232323;
+  --rp-shell-bot: #1b1b1b;
+  --rp-edge: #2f2f2f;
+  --rp-edge-off: #272727;
+  /* One font for all text fields (search, name fields, well selects) */
+  --rp-field-font: 600 12px/1.2 var(--rp-font);
+  /* RIG zones (chain, card, footswitch bar) */
+  --rp-zone-gap: 8px;
+  --rp-zone-radius: 10px;
+  --rp-zone-edge: #262626;
+  --rp-well-bg: linear-gradient(180deg, #141414, #1d1d1d);
+  --rp-well-shadow: inset 0 1px 0 rgba(0,0,0,.55), inset 0 -1px 0 #414141;
+  --rp-raise-bg: linear-gradient(180deg, #2f2f2f, #242424);
+  --rp-raise-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 -1px 0 rgba(0,0,0,.4) inset, 0 1px 3px rgba(0,0,0,.4);
+  --rp-screen-top: #050708;
+  --rp-screen-bot: #0d1012;
+  --rp-screen-edge: #3c4145;
+  --rp-screen-edge-t: #23272a;
+  --rp-screen-text: #cbd1d4;
+  --rp-screen-dim: #6a6e71;
+  --rp-screen-arrow: #8e9296;
+  --rp-switch-edge: #3b3b3b;
+  --rp-stroke: #333333;
+  --rp-stroke-bright: #4a4a4a;
+  --rp-tint-1: rgba(255,255,255,.04);
+  --rp-tint-2: rgba(255,255,255,.07);
+  --rp-tint-3: rgba(255,255,255,.11);
+  --rp-hl-deep: #a8342d;
+  --rp-hl-fill: linear-gradient(180deg, #d0423a, #a8342d);
+  --rp-ease: cubic-bezier(.2, .8, .25, 1);
+  --rp-font: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --rp-radius: 7px;
+
+  /* HeadRush block categories */
+  --rp-c-input: #62e6f2;
+  --rp-c-output: #f5f5f5;
+  --rp-c-amp: #ff845e;
+  --rp-c-cab: #b58cff;
+  --rp-c-clone: #ffad69;
+  --rp-c-od: #ffd166;
+  --rp-c-dist: #ff667d;
+  --rp-c-eq: #54e0bd;
+  --rp-c-comp: #7fe09b;
+  --rp-c-delay: #55c2ff;
+  --rp-c-reverb: #f783c5;
+  --rp-c-chorus: #6f98ff;
+  --rp-c-phaser: #9d7cff;
+  --rp-c-vib: #44d0e7;
+  --rp-c-filter: #9bdd6c;
+  --rp-c-pitch: #d78cff;
+  --rp-c-dyn: #a6d96a;
+  --rp-c-util: #b5b5b5;
+
+  /* TONE3000 capture categories (NAMplify drawer) */
+  --rp-cap-amp: #e04a3a;
+  --rp-cap-fullrig: #f0912a;
+  --rp-cap-ir: #e8c34a;
+  --rp-cap-pedal: #2fbf9c;
+  --rp-cap-outboard: #b25ad0;
+
+  /* HeadRush rig colours as used for gain categories (9 blue clean, 3 yellow hot clean,
+     4 orange crunch, 5 red drive/high gain, 2 green bass). */
+  --rp-rig-clean: #4f8fe8;
+  --rp-rig-hot: #e8c547;
+  --rp-rig-crunch: #f08a3c;
+  --rp-rig-gain: #e0453c;
+  --rp-rig-bass: #4caf6d;
+}
+
+:root {
+  --canvas: var(--rp-m0);
+  --panel: var(--rp-m1);
+  --panel-2: var(--rp-m2);
+  --elevated: var(--rp-m3);
+  --sunken: var(--rp-well);
+  --line: var(--rp-m5);
+  --line-soft: var(--rp-m4);
+  --text: var(--rp-ink);
+  --text-2: #c9c9c9;
+  --muted: var(--rp-dim);
+  --cyan: #d9d9d9;
+  --cyan-rgb: 217, 217, 217;
+  --violet: var(--rp-hl-ink);
+  --violet-rgb: 236, 106, 97;
+  --shadow: none;
+}
+
+:root,
+:root body,
+:root :is(button, input, select, textarea) {
+  font-family: var(--rp-font);
+  letter-spacing: .02em;
+}
+
+:root body { background: var(--rp-m1); }
+
+:root :focus-visible { outline-color: var(--rp-acc); }
+
+/* Switches: off = dark well, on = turquoise (one of the few places the accent appears). */
+:root .switch--on::before { border-color: rgba(var(--rp-acc-rgb), .6); background: rgba(var(--rp-acc-rgb), .18); }
+:root .switch--on span { background: var(--rp-acc); box-shadow: none; }
+
+:root .ui-button--primary {
+  background: var(--rp-hl);
+  border-color: var(--rp-hl);
+  color: #fff;
+  box-shadow: none;
+}
+:root .ui-button--primary:hover:not(:disabled) { background: #c83d35; }
+
+:root ::selection { background: rgba(208, 66, 58, .35); }
+:root ::-webkit-scrollbar-thumb { background: var(--rp-m4); }

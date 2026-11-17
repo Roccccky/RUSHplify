@@ -1,0 +1,57 @@
+node_modules/
+dist/
+src-tauri/target/
+.DS_Store
+*.log
+*.tsbuildinfo
+coverage/
+coverage-all/
+playwright-report/
+test-results/
+.idea/
+.vscode/*
+!.vscode/tasks.json
+
+# Credentials and signing material
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+*.jks
+*.keystore
+
+# Local databases
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+
+# Local research, personal experiments and historical archives
+reference/
+archive/
+output/
+captures/
+/site/
+/brand/
+*.prompt.txt
+*.bundle
+*.patch
+
+# Copied/generated material
+HeadRush Flex Prime - User Guide - v5.1.0.pdf
+rushplify-brand-pack.zip
+src-tauri/gen/schemas/
+release-artifacts/
+*.tmp
+*.bak
+
+# Local workspace tool state; project automation is versioned explicitly
+/.*/
+!/.github/
+!/.vscode/

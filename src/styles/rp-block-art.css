@@ -1,0 +1,23 @@
+/* RUSHplify block pictograms (components/rp/block-art.tsx). Model colours come from
+   domain/block-inspiration.ts as fill attributes; the neutral parts below use rp-tokens greys. */
+
+.rp-art { display: block; flex: none; }
+.rp-art .rpa-body { stroke: rgba(0,0,0,.55); stroke-width: .7; }
+.rp-art .rpa-handle { fill: var(--rp-m4); stroke: var(--rp-stroke-bright); stroke-width: .5; }
+.rp-art .rpa-knob { stroke: rgba(0,0,0,.6); stroke-width: .45; }
+.rp-art .rpa-dot { stroke-width: .65; stroke-linecap: round; }
+.rp-art .rpa-sw { fill: var(--rp-dim); stroke: var(--rp-m0); stroke-width: .5; }
+.rp-art .rpa-sw-cap { fill: var(--rp-ink); }
+.rp-art .rpa-led { fill: var(--rp-hl); }
+.rp-art .rpa-slot { stroke-width: .5; opacity: .55; }
+.rp-art .rpa-button { fill: var(--rp-m0); }
+.rp-art .rpa-jack { fill: var(--rp-dim); stroke: var(--rp-m0); stroke-width: .4; }
+.rp-art .rpa-grille { fill: var(--rp-m0); }
+.rp-art .rpa-cone { fill: var(--rp-m3); stroke: var(--rp-m4); stroke-width: .5; }
+.rp-art .rpa-dust { fill: var(--rp-m5); }
+.rp-art .rpa-grip { fill: var(--rp-m1); }
+.rp-art .rpa-rib { stroke: var(--rp-m4); stroke-width: .9; stroke-linecap: round; }
+.rp-art .rpa-ladder { fill: var(--rp-m0); }
+.rp-art .rpa-chrome { fill: #c9ccce; stroke: var(--rp-m0); stroke-width: .5; }
+.rp-art .rpa-mic { stroke: var(--rp-dim); stroke-width: 1; }
+.rp-art .rpa-mic-head { fill: var(--rp-far); }

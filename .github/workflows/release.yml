@@ -1,0 +1,136 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            args: ""
+          - platform: macos-15
+            target: aarch64-apple-darwin
+            args: "--target aarch64-apple-darwin"
+          - platform: macos-15-intel
+            target: x86_64-apple-darwin
+            args: "--target x86_64-apple-darwin"
+          - platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            args: "--bundles deb,rpm,appimage"
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 45
+    env:
+      APPIMAGE_EXTRACT_AND_RUN: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+          key: ${{ matrix.target }}
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential curl wget file libwebkit2gtk-4.1-dev \
+            libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Verify repository and runtime dependencies
+        run: |
+          npm run check:repo
+          npm audit --omit=dev
+      - name: Test application
+        run: npm test -- --maxWorkers=2
+      - name: Test native transport
+        run: cargo test --locked --manifest-path src-tauri/Cargo.toml --target ${{ matrix.target }}
+      - name: Verify clean release payload
+        run: npm run release:check
+      - name: Configure optional Apple signing
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          APPLE_IN_APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_IN_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_IN_APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_IN_APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_IN_APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_IN_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          for key in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            source_key="APPLE_IN_${key}"
+            value="${!source_key-}"
+            if [[ -n "$value" ]]; then
+              delimiter="EOF_$(uuidgen)"
+              printf '%s<<%s\n%s\n%s\n' "$key" "$delimiter" "$value" "$delimiter" >> "$GITHUB_ENV"
+            fi
+          done
+          if [[ -z "${APPLE_IN_APPLE_SIGNING_IDENTITY:-}" ]]; then
+            printf '%s\n' 'APPLE_SIGNING_IDENTITY=-' >> "$GITHUB_ENV"
+          fi
+      - name: Build installers and upload to draft release
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || 'v__VERSION__' }}
+          releaseName: RUSHplify ${{ github.ref_type == 'tag' && github.ref_name || '__VERSION__' }}
+          releaseBody: |
+            Early beta for HeadRush Flex Prime, Prime and Core. Tested on Flex Prime with firmware 5.2.0. Back up your rigs before use.
+
+            - macOS: `aarch64` = Apple Silicon, `x64` = Intel. Unsigned builds: right-click the app, then Open.
+            - Windows: `.msi` or `-setup.exe`. SmartScreen may warn about an unknown publisher.
+            - Linux: `.AppImage`, `.deb` or `.rpm`.
+          releaseDraft: true
+          prerelease: false
+          uploadUpdaterJson: false
+          retryAttempts: 1
+          args: ${{ matrix.args }}
+          releaseAssetNamePattern: "RUSHplify_[version]_[platform]_[arch][_setup].[ext]"
+
+  checksums:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Add SHA256SUMS.txt to the draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          mkdir assets && cd assets
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern 'RUSHplify_*'
+          sha256sum RUSHplify_* > SHA256SUMS.txt
+          gh release upload "$TAG" SHA256SUMS.txt --repo "$GITHUB_REPOSITORY" --clobber

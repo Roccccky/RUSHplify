@@ -1,0 +1,230 @@
+/* RUSHplify shell: header (rooms, displays, actions), section bar, workspace.
+   Flat NAMplify surfaces; sizes ≥ 11px (see readability.test.ts). */
+
+.app.rp-app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 60px auto minmax(0, 1fr);
+  height: 100vh;
+  background: var(--rp-m1);
+  color: var(--rp-ink);
+  font-family: var(--rp-font);
+}
+
+/* Header floats on the metal: no bar, no rule (NAMplify .header). */
+.rp-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 4px 16px 4px 18px; /* symmetric: wordmark, rooms, displays, LED and icons share one centre line */
+  background: none;
+}
+.rp-top__brand { flex: none; }
+.rp-top__brand .rp-brand__word { font-size: 18px; }
+
+.rp-rooms, .rp-sections { display: flex; gap: 2px; min-width: 0; }
+.rp-rooms button, .rp-sections button {
+  position: relative;
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--rp-far);
+  font: 700 12px/1 var(--rp-font);
+  letter-spacing: .14em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color .12s var(--rp-ease), background .12s var(--rp-ease);
+}
+.rp-rooms button:hover, .rp-sections button:hover { color: var(--rp-ink); background: var(--rp-tint-1); }
+.rp-rooms button.on, .rp-sections button.on { color: var(--rp-ink); }
+.rp-rooms button.on::after, .rp-sections button.on::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: 2px; height: 2px; border-radius: 1px; background: var(--rp-acc); }
+
+.rp-top__displays { flex: 1; display: flex; justify-content: center; gap: 8px; min-width: 0; }
+.rp-top__rig { flex: 0 1 380px; min-width: 190px; }
+.rp-top__scene { flex: 0 0 132px; }
+.rp-top__actions { display: flex; align-items: center; gap: 8px; flex: none; }
+
+/* Display (NAMplify screen): dark glass, light edge, triangle arrows. */
+.rp-display {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 34px;
+  min-width: 0;
+  background: linear-gradient(180deg, var(--rp-screen-top), var(--rp-screen-bot));
+  border: 1px solid var(--rp-screen-edge);
+  border-top-color: var(--rp-screen-edge-t);
+  border-radius: 5px;
+  user-select: none;
+}
+.rp-display__arrow {
+  flex: none;
+  display: flex; /* flex, not grid: the hidden ◀ ▶ text would take a second grid row and push the triangle up */
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--rp-screen-arrow);
+  font-size: 0;
+  cursor: pointer;
+}
+.rp-display__arrow::before { content: ""; width: 6px; height: 10px; background: currentColor; clip-path: polygon(100% 0, 0 50%, 100% 100%); }
+.rp-display__arrow:last-of-type::before { clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.rp-display__arrow:hover:not(:disabled) { color: var(--rp-screen-text); }
+.rp-display__arrow:disabled { color: var(--rp-off); opacity: .5; cursor: default; }
+.rp-display__value {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--rp-screen-text);
+  font: 600 13px/1 var(--rp-font);
+  letter-spacing: .04em;
+  cursor: pointer;
+}
+.rp-display__value span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-display__value b { flex: none; color: var(--rp-screen-dim); font-weight: 600; }
+.rp-display__dot { flex: none; width: 8px; height: 8px; border-radius: 2px; }
+.rp-display__dirty { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--rp-warn); }
+.rp-display--disabled { opacity: .55; }
+.rp-display__value:focus-visible { outline: 2px solid var(--rp-acc); outline-offset: -2px; border-radius: 4px; }
+
+/* List under a display */
+.rp-dial {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  min-width: 220px;
+  padding: 6px;
+  background: var(--rp-m2);
+  border: 1px solid var(--rp-m4);
+  border-radius: var(--rp-radius);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .45);
+}
+.rp-dial__row { display: flex; gap: 8px; padding: 5px 6px; border-radius: 5px; color: var(--rp-dim); font-size: 12px; white-space: nowrap; overflow: hidden; }
+.rp-dial__row span { overflow: hidden; text-overflow: ellipsis; }
+.rp-dial__row b { color: var(--rp-far); font-weight: 500; }
+.rp-dial__row.on { background: var(--rp-m4); color: var(--rp-ink); }
+.rp-dial__row.on b { color: var(--rp-hl-ink); }
+
+/* Buttons and LED: raised part / highlight fill (NAMplify). */
+.rp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--rp-raise-bg);
+  box-shadow: var(--rp-raise-shadow);
+  color: var(--rp-dim);
+  font: 700 11px/1 var(--rp-font);
+  letter-spacing: .14em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rp-btn:hover:not(:disabled) { color: var(--rp-ink); }
+.rp-btn:disabled { color: var(--rp-off); cursor: default; }
+.rp-btn--pri { background: var(--rp-hl-fill); color: #fff; box-shadow: none; }
+.rp-btn--pri:hover:not(:disabled) { filter: brightness(1.12); color: #fff; }
+
+.rp-led {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  max-width: 220px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--rp-dim);
+  font: 12px/1 var(--rp-font);
+  letter-spacing: .06em;
+  cursor: pointer;
+}
+.rp-led:hover { background: var(--rp-tint-1); color: var(--rp-ink); }
+.rp-led span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: uppercase; }
+.rp-led em { font-style: normal; color: var(--rp-far); }
+.rp-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--rp-dim);
+  cursor: pointer;
+}
+.rp-icon:hover, .rp-icon.on { color: var(--rp-ink); background: var(--rp-tint-1); }
+
+.rp-sections {
+  align-items: center;
+  padding: 0 16px 0 12px;
+  background: none;
+}
+.rp-sections button { height: 26px; font-size: 11px; color: var(--rp-off); }
+.rp-sections__source { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; }
+.rp-sections__source small { color: var(--rp-far); font-size: 11px; letter-spacing: .14em; }
+.rp-sections__source img { display: block; height: 14px; width: auto; }
+
+.rp-main { position: relative; min-height: 0; overflow: auto; background: var(--rp-m1); }
+
+.app--offline > :is(.rp-top, .rp-sections) { filter: grayscale(.55) brightness(.9); opacity: .72; pointer-events: none; }
+
+.rp-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (max-width: 1180px) {
+  .rp-top__brand .rp-brand__word { display: none; }
+  .rp-top__brand::before { content: "RP"; font: 300 16px/1 var(--rp-font); letter-spacing: .2em; }
+  .rp-led span { display: none; }
+  .rp-rooms button { padding: 0 9px; }
+}
+
+/* Stage fills the workspace below the header instead of scrolling the page. */
+.rp-app .app-workspace:has(> .stage-view) { height: 100%; min-height: 0; }
+.rp-app .stage-view:not(.stage--fullscreen) { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: hidden; }
+.rp-app .stage-view:not(.stage--fullscreen) .live-workspace { flex: 1; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+.rp-app .stage-view:not(.stage--fullscreen) .live-board-wrap { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.rp-app .stage-view:not(.stage--fullscreen) .live-board.stage-grid { flex: 1; min-height: 0; overflow: auto; }
+.rp-app .stage-view:not(.stage--fullscreen) .live-inspector { min-height: 0; max-height: 100%; overflow: auto; }
+
+/* Rooms with one view (RIG) have no section bar; the workspace keeps the last row. */
+.rp-app > .rp-sections { grid-row: 2; height: 34px; }
+.rp-app > .rp-main { grid-row: 3; }
+
+/* Rename the loaded rig in place (double-click or F2 on the value). */
+.rp-display__name { flex: 1; align-self: center; }
+.rp-display__name .rp-namefield__error { position: absolute; top: calc(100% + 6px); left: 0; z-index: 5; padding: 4px 6px; border-radius: 4px; background: var(--rp-m2); box-shadow: 0 0 0 1px var(--rp-edge); }
+
+/* Click on a display: the whole list, scrollable, like the pedal's list view */
+.rp-dial--list { max-height: min(60vh, 420px); overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 1px; }
+.rp-dial--list .rp-dial__row { flex: none; align-items: center; width: 100%; border: 0; background: none; font: 500 12px/1.2 var(--rp-font); text-align: left; cursor: pointer; }
+.rp-dial--list .rp-dial__row:hover, .rp-dial--list .rp-dial__row:focus-visible { background: var(--rp-m3); color: var(--rp-ink); outline: none; }
+.rp-dial--list .rp-dial__row.on { background: var(--rp-m4); color: var(--rp-ink); }
+.rp-dial--list .rp-dial__row i { flex: none; width: 9px; height: 9px; border-radius: 2px; }
+.rp-dial--list .rp-dial__row b { min-width: 26px; }
+
+/* Rig colour in the save dialogs: the HeadRush palette in one row */
+.rp-rigcolours { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.rp-rigcolours button { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; background: var(--swatch); color: #111; box-shadow: inset 0 0 0 1px rgba(0,0,0,.35); cursor: pointer; }
+.rp-rigcolours button:hover { filter: brightness(1.12); }
+.rp-rigcolours button.on { box-shadow: 0 0 0 2px var(--rp-m1), 0 0 0 4px var(--rp-acc); }
+/* Setlist the saved rig also goes into */
+.rp-savelist { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 10px; width: 100%; max-width: none; margin-top: 14px; }

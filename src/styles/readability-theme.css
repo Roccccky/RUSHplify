@@ -1,0 +1,150 @@
+/* App-wide readability overrides. Imported last. */
+:root {
+  color-scheme: dark;
+  --canvas: #0b0b0b;
+  --panel: #161616;
+  --panel-2: #1f1f1f;
+  --elevated: #262626;
+  --sunken: #0d0d0d;
+  --line: #344357;
+  --line-soft: #313131;
+  --text: #f7f7f7;
+  --text-2: #d2d2d2;
+  --muted: #96a6b9;
+  --cyan: #cbcbcb;
+  --cyan-rgb: 94, 231, 240;
+  --violet: #ae8cff;
+  --violet-rgb: 174, 140, 255;
+  --green: #59e6a6;
+  --green-rgb: 89, 230, 166;
+  --amber: #ffc45f;
+  --amber-rgb: 255, 196, 95;
+  --red: #ff7188;
+  --red-rgb: 255, 113, 136;
+  --blue: #67b8ff;
+  --rose: #ff7abd;
+  --mint: #c6c6c6;
+}
+
+body {
+  background:var(--canvas);
+  color: var(--text);
+}
+
+.main { grid-template-rows: 69px minmax(0, 1fr) 32px; }
+.sidebar { border-color: #353535; background:#131313; }
+.nav-section { min-height: 27px; height: auto; color: #91a0b4; line-height: 1.25; }
+.sidebar__nav button { color: #aeaeae; }
+.sidebar__nav button:hover { background: #212121; color: #f6f6f6; }
+.sidebar__nav button.active {
+  background:none;
+  color: #fbfbfb;
+}
+.collapse-button, .topbar__status, .statusbar { color: #96a6b9; }
+.command-trigger { border-color: #34465b; background: #151515; color: #b5b5b5; }
+.command-trigger:hover { border-color: #52667e; color: #eaeaea; }
+.statusbar { min-height: 32px; height: auto; background: #0e0e0e; }
+
+.card {
+  border-color: #3a3a3a;
+  background:rgba(28,28,28,.99);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, .18), inset 0 1px rgba(255, 255, 255, .018);
+}
+.card--interactive:hover { border-color: #53677f; }
+.page-title p, .card p { color: #adadad; }
+.eyebrow { color: #93a5b9; }
+.card-heading, .panel-title { color: #b5b5b5; }
+
+.ui-button {
+  min-height: 35px;
+  height: auto;
+  padding-block: 7px;
+  font-size: 13px;
+}
+.ui-button--sm { min-height: 31px; height: auto; padding-block: 5px; }
+.ui-button--lg { min-height: 42px; height: auto; }
+.ui-button--secondary { border-color: #405168; background: #242424; color: #e8e8e8; }
+.ui-button--secondary:hover { border-color: #60748c; background: #313131; }
+.ui-button--ghost { color: #c8c8c8; }
+.ui-button--outline { border-color: #53667c; color: #e9e9e9; }
+.ui-button--danger { border-color: rgba(var(--red-rgb), .48); background: rgba(var(--red-rgb), .12); color: #ff9aaa; }
+.icon-button { color: #b5b5b5; }
+.icon-button:hover { border-color: #506278; background: #262626; color: #fff; }
+.ui-button:disabled, .icon-button:disabled { opacity: .55; }
+
+.ui-input, .ui-select, .search-input {
+  border-color: #394a60;
+  background: #0f0f0f;
+  color: #f2f2f2;
+}
+.ui-input:hover, .ui-select:hover, .search-input:hover { border-color: #50657e; }
+.ui-input:focus, .ui-select:focus, .search-input:focus-within { border-color: var(--cyan); }
+.ui-input::placeholder { color: #7e8fa5; }
+.ui-label { color: #cacaca; }
+.ui-label small { color: #91a2b6; }
+
+.tabs { border-color: #334257; background: #0e0e0e; }
+.tabs button { min-height: 30px; height: auto; color: #9cacbf; }
+.tabs button:hover { color: #e7e7e7; }
+.tabs button.active {
+  background:#333333;
+  color: #fafafa;
+  box-shadow: inset 0 -2px var(--cyan), 0 2px 8px rgba(0, 0, 0, .28);
+}
+
+.badge { min-height: 22px; height: auto; padding-block: 3px; border-color: #44546a; color: #c3c3c3; }
+.badge--cyan { border-color: rgba(var(--cyan-rgb), .48); background: rgba(var(--cyan-rgb), .13); color: #e5e5e5; }
+.badge--violet { border-color: rgba(var(--violet-rgb), .46); background: rgba(var(--violet-rgb), .14); color: #cbb9ff; }
+.badge--green { border-color: rgba(var(--green-rgb), .43); background: rgba(var(--green-rgb), .12); color: #8cf0c1; }
+.badge--amber { border-color: rgba(var(--amber-rgb), .44); background: rgba(var(--amber-rgb), .12); color: #ffd890; }
+.badge--red { border-color: rgba(var(--red-rgb), .45); background: rgba(var(--red-rgb), .12); color: #ff9eb0; }
+.badge--blue { border-color: rgba(103, 184, 255, .45); background: rgba(103, 184, 255, .12); color: #9bd1ff; }
+
+/* Drum transport colours: name cyan, phrase position blue. */
+.drummer-brand small, .drummer-current small, .drummer-play small,
+.drummer-actions small, .drummer-device-note { color: #91a5b7; }
+.drummer-current span { color: #b4b4b4; }
+.drum-position strong { font-size: 12px; }
+.drummer-timeline { border-color: #3b4b5f; background: #0e0e0e; }
+.drummer-timeline__head > span { color: var(--cyan); text-shadow: 0 0 12px rgba(var(--cyan-rgb), .18); }
+.drummer-timeline__head small { color: #b0b0b0; }
+.drummer-actions button:nth-child(1) .drummer-action-icon { color: var(--violet); background: rgba(var(--violet-rgb), .12); }
+.drummer-actions button:nth-child(2) .drummer-action-icon { color: var(--amber); background: rgba(var(--amber-rgb), .11); }
+.drummer-actions button:nth-child(3) .drummer-action-icon { color: var(--blue); background: rgba(103, 184, 255, .11); }
+.drummer-actions button:nth-child(4) .drummer-action-icon { color: var(--red); background: rgba(var(--red-rgb), .11); }
+
+/* Drummer secondary text stays at 12px or more. */
+.drum-studio-head .drummer-brand small,
+.drum-session-summary small,
+.drum-session-summary strong span,
+.drum-surface-label > span,
+.drum-surface-label > small,
+.drum-main-play small,
+.drum-device-connection,
+.drum-workbench-head > div > small,
+.drum-workspace-tabs small,
+.drum-workspace-content .fill-pool button small,
+.drum-preset-library > label > span,
+.drum-preset-rename label > span,
+.drum-preset-list small,
+.drum-preset-library__hint,
+.drum-preset-selected small,
+.drum-preset-selected p,
+.drum-preset-create small,
+.drum-preset-empty p,
+.drum-control-group > header small,
+.drum-control-group .parameter-row div > span,
+.drum-console .parameter-choice__heading span,
+.drum-console .parameter-choice__tiles button,
+.drum-console .parameter-choice__stepper output small,
+.drum-console .drummer-phrase__head small,
+.drum-console .drummer-phrase__sync,
+.drum-console .drummer-phrase__lane > span,
+.drum-console .drummer-phrase__foot,
+.drum-console .drummer-phrase__foot > b { font-size: 12px; }
+
+@media (max-width: 700px) {
+  .page { padding-inline: 16px; }
+  .page-title { align-items: flex-start; gap: 12px; }
+  .page-title__actions { flex-wrap: wrap; }
+}

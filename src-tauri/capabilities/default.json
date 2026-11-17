@@ -1,0 +1,25 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "RUSHplify desktop window permissions",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-set-fullscreen",
+    "core:window:allow-set-theme",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
+    "fs:deny-default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "https://github.com/Roccccky/NAMplify" },
+        { "url": "https://github.com/tone-3000/tone3000-plugin" },
+        { "url": "https://tone3000.com/*" },
+        { "url": "https://*.tone3000.com/*" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,412 @@
+/* RIG · CHAIN in the HeadRush layout: rig list / block browser left, Z chain centre (IN small left, OUT small
+   bottom right, stomp tiles), assignments below, inspector right. Flat NAMplify greys; colour only from block
+   categories and footswitch LEDs; turquoise only for selection, focus and switches when on. */
+
+/* ---- chain canvas: floats on the metal, NAMplify pedal tiles ---- */
+/* The chain fits its zone: tiles shrink with the zone width (container query) from 60 px down to 48 px; below
+   that the zone scrolls sideways, so the whole chain stays in the HeadRush layout and stays readable. */
+.rp-zone__chain { container-type: inline-size; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: thin; }
+.rp-chain {
+  --rp-chain-gap: clamp(6px, 1.4cqw, 12px);
+  --rp-io: clamp(38px, 4cqw, 46px);
+  --rp-tile-w: clamp(48px, calc((100cqw - 32px - 2 * var(--rp-io) - (var(--rp-chain-cols, 7) + 1) * var(--rp-chain-gap)) / var(--rp-chain-cols, 7)), 60px);
+  --rp-tile-h: calc(var(--rp-tile-w) * 68 / 60);
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--rp-io) repeat(var(--rp-chain-cols, 7), var(--rp-tile-w)) var(--rp-io);
+  grid-template-rows: var(--rp-tile-h) var(--rp-tile-h);
+  justify-content: center;
+  width: max-content;
+  min-width: 100%;
+  box-sizing: border-box;
+  column-gap: var(--rp-chain-gap);
+  row-gap: 22px;
+  align-items: center;
+  flex: none;
+  padding: 10px 16px 6px;
+}
+
+.rp-chain__cable { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.rp-chain__cable path { fill: none; stroke: var(--rp-stroke); stroke-width: 2; stroke-linejoin: round; }
+
+.rp-slot { position: relative; z-index: 1; display: flex; justify-content: center; min-width: 0; scroll-snap-align: center; }
+.rp-slot--span { align-self: center; }
+.rp-ptile.rp-tile { width: var(--rp-tile-w, 60px); height: var(--rp-tile-h, 68px); padding: 0; border: 0; text-align: initial; cursor: grab; touch-action: none; } /* beats the legacy .block-node in styles.css */
+.rp-ptile--add.rp-tile { border: 1.5px dashed var(--rp-stroke); }
+.rp-ptile--add.rp-tile { cursor: pointer; }
+
+/* IN / OUT: small jacks */
+.rp-io {
+  position: relative; z-index: 1;
+  display: grid; place-items: center; align-content: center; gap: 4px;
+  width: var(--rp-io, 46px); height: var(--rp-io, 46px); padding: 0;
+  background: var(--rp-raise-bg); box-shadow: var(--rp-raise-shadow); color: var(--rp-dim);
+  border: 0; border-radius: 8px; /* square jacks, same corners as the tiles */
+  cursor: pointer;
+}
+.rp-io__name { font: 700 11px/1 var(--rp-font); letter-spacing: .08em; }
+.rp-chain .rp-ptile__mark svg.rp-art { width: calc(var(--rp-tile-w, 60px) * .6); height: auto; }
+/* Empty slots stay quiet: a dim plus, brighter on hover */
+.rp-chain .rp-ptile--add .rp-ptile__mark, .rp-chain .rp-ptile--add .rp-ptile__name { color: var(--rp-off); }
+.rp-chain .rp-ptile--add:hover .rp-ptile__mark, .rp-chain .rp-ptile--add:hover .rp-ptile__name { color: var(--rp-dim); }
+.rp-io svg { display: none; }
+.rp-io:hover { color: var(--rp-ink); }
+.rp-io.on { color: var(--rp-ink); box-shadow: var(--rp-raise-shadow), 0 0 0 2px var(--rp-m1), 0 0 0 4px var(--rp-acc); }
+/* OUT: mono = one circle, stereo = two */
+.rp-io svg.rp-io__chan { display: block; fill: none; stroke: currentColor; stroke-width: 1.4; }
+
+/* drag states (shared hook) */
+.rp-slot.drag-source .rp-ptile { opacity: .3; }
+.rp-slot.drop-target .rp-ptile { box-shadow: 0 0 0 2px var(--rp-m1), 0 0 0 4px var(--rp-acc); }
+
+/* ---- layout: rigs left, the board centre (chain · card · pedal row), browser right ---- */
+.rp-rig {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr) 320px;
+  gap: var(--rp-zone-gap);
+  height: 100%;
+  min-height: 0;
+  padding: var(--rp-zone-gap);
+  font-family: var(--rp-font);
+  color: var(--rp-ink);
+}
+.app-workspace:has(> .rp-rig) { height: 100%; padding: 0; }
+.rp-rig__centre { display: flex; flex-direction: column; gap: var(--rp-zone-gap); min-width: 0; min-height: 0; overflow: hidden; }
+.rp-rig__stage { flex: 1 1 0; display: flex; gap: var(--rp-zone-gap); min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+
+/* shared small controls */
+.rp-grow { flex: 1 1 auto; }
+.rp-seg { display: inline-flex; padding: 2px; gap: 2px; background: var(--rp-well-bg); box-shadow: var(--rp-well-shadow); border-radius: 6px; }
+.rp-seg button { flex: 1; padding: 6px 10px; border: 0; border-radius: 4px; background: transparent; color: var(--rp-far); font: 700 11px/1 var(--rp-font); letter-spacing: .08em; cursor: pointer; }
+.rp-seg button:hover:not(:disabled):not(.on) { color: var(--rp-ink); }
+.rp-seg button.on { background: var(--rp-hl-fill); color: #fff; }
+.rp-seg--mini button { padding: 4px 8px; }
+.rp-toggle { display: inline-flex; align-items: center; gap: 8px; color: var(--rp-far); font: 600 11px/1 var(--rp-font); letter-spacing: .08em; }
+.rp-chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; background: var(--rp-raise-bg); box-shadow: var(--rp-raise-shadow); border: 0; border-radius: 4px; color: var(--rp-dim); font: 700 11px/1 var(--rp-font); letter-spacing: .1em; cursor: pointer; }
+.rp-chip:hover:not(:disabled) { color: var(--rp-ink); }
+.rp-chip.on { background: var(--rp-hl-fill); color: #fff; box-shadow: none; }
+.rp-chip:disabled { opacity: .4; cursor: not-allowed; }
+.rp-search { display: flex; align-items: center; gap: 6px; padding: 0 8px; background: var(--rp-well-bg); box-shadow: var(--rp-well-shadow); border-radius: 6px; color: var(--rp-far); }
+.rp-search .ui-input { width: 100%; height: 30px; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.rp-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--rp-off); }
+.rp-dot.on { background: var(--block-color, var(--rp-ok)); box-shadow: 0 0 6px color-mix(in srgb, var(--block-color, var(--rp-ok)) 70%, transparent); }
+
+/* ---- chain header: floating icon row (NAMplify header-right) ---- */
+.rp-chain-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 10px 8px 8px; box-shadow: inset 0 -1px 0 var(--rp-zone-edge); }
+.rp-chain-head__name { color: var(--rp-far); font: 700 11px/1 var(--rp-font); letter-spacing: .14em; white-space: nowrap; }
+.rp-routing { display: inline-flex; gap: 2px; padding: 2px; background: var(--rp-well-bg); box-shadow: var(--rp-well-shadow); border-radius: 6px; }
+.rp-routing button { display: grid; place-items: center; height: 30px; padding: 0 9px; border: 0; border-radius: 4px; background: transparent; cursor: pointer; }
+.rp-routing rect { fill: var(--rp-off); }
+.rp-routing button:hover rect { fill: var(--rp-dim); }
+.rp-routing button.on { background: var(--rp-hl-fill); }
+.rp-routing button.on rect { fill: #fff; }
+.rp-save { height: 28px; }
+
+/* ---- side columns: NAMplify drawer surface, one edge line. Left = rigs, right = browser ---- */
+.rp-side { display: flex; flex-direction: column; min-height: 0; overflow: auto; }
+.rp-side__body { display: flex; flex-direction: column; gap: 8px; min-height: 0; padding: 12px 10px 10px; }
+.rp-ingr { display: flex; flex-direction: column; gap: 10px; min-height: 0; padding: 12px 10px 10px; overflow: hidden; }
+.rp-ingr > .rp-wellseg { align-self: stretch; }
+.rp-ingr > .rp-wellseg > button { flex: 1; }
+.rp-ingr > .rp-blocks { flex: 1; padding: 0; overflow-y: auto; scrollbar-width: thin; }
+.rp-side__select { position: relative; display: flex; align-items: center; color: var(--rp-far); }
+.rp-side__select select { width: 100%; height: 30px; padding: 0 28px 0 10px; appearance: none; background: var(--rp-well-bg); box-shadow: var(--rp-well-shadow); border: 0; border-radius: 6px; color: var(--rp-ink); font: 600 12px/1 var(--rp-font); }
+.rp-side__select svg { position: absolute; right: 9px; pointer-events: none; }
+.rp-rig-list { margin: 0; padding: 0; list-style: none; }
+.rp-rig-list button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 7px 8px; border: 0; border-radius: 5px; background: transparent; color: var(--rp-dim); font: 500 12px/1.2 var(--rp-font); text-align: left; cursor: pointer; }
+.rp-rig-list button:hover { background: var(--rp-tint-1); color: var(--rp-ink); }
+.rp-rig-list button.on { background: var(--rp-tint-2); color: var(--rp-ink); }
+.rp-rig-list i { flex: none; width: 11px; height: 11px; border-radius: 3px; }
+.rp-rig-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.rp-blocks__cols { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.rp-blocks__cats { display: flex; flex-wrap: wrap; gap: 3px; }
+.rp-blocks__cats button { display: flex; align-items: center; gap: 4px; padding: 5px 7px; border: 0; border-radius: 4px; background: var(--rp-tint-1); color: var(--rp-dim); font: 600 11px/1 var(--rp-font); cursor: pointer; }
+/* Grey until chosen: only the open category shows its colour (the colour of the effect the card shows) */
+.rp-blocks__cats button:hover { background: var(--rp-tint-2); color: var(--rp-ink); }
+.rp-blocks__cats button.on { background: var(--category-color, var(--rp-dim)); color: #111; box-shadow: none; }
+.rp-models { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.rp-models__hint { display: grid; place-items: center; padding: 12px; color: var(--rp-off); }
+.rp-models__error { color: var(--rp-hl-ink); font-size: 11px; }
+.rp-model { display: flex; align-items: center; border-radius: 5px; }
+.rp-models li.current > .rp-model { background: color-mix(in srgb, var(--block-color) 14%, var(--rp-m2)); }
+.rp-model__name { flex: 1; display: flex; align-items: center; gap: 7px; min-width: 0; padding: 6px; border: 0; border-radius: 5px; background: transparent; color: var(--rp-ink); font: 600 11px/1.2 var(--rp-font); text-align: left; cursor: pointer; }
+.rp-model__name span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-model__name:hover:not(:disabled) { background: var(--rp-tint-1); }
+.rp-model__name:disabled { color: var(--rp-far); cursor: default; }
+.rp-model__icon { display: grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 5px; background: var(--block-color); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.28); }
+.rp-model__fav, .rp-model__more { flex: none; padding: 5px; border: 0; background: none; color: var(--rp-off); cursor: pointer; }
+.rp-model__fav:hover, .rp-model__fav.on { color: var(--rp-warn); }
+.rp-model__more:hover { color: var(--rp-ink); }
+.rp-model__more svg { transition: transform .12s; }
+.rp-models li.open .rp-model__more svg { transform: rotate(90deg); }
+.rp-presets { margin: 2px 0 6px 27px; padding: 0 0 0 8px; list-style: none; border-left: 1px solid var(--rp-m4); }
+.rp-presets button { display: block; width: 100%; padding: 5px 6px; border: 0; border-radius: 4px; background: none; color: var(--rp-dim); font: 500 11px/1.2 var(--rp-font); text-align: left; cursor: pointer; }
+.rp-presets button:hover:not(:disabled) { background: var(--rp-tint-1); color: var(--rp-ink); }
+.rp-presets button.on { color: var(--rp-ink); }
+
+/* ---- assignments: footswitch discs at the foot of the board ---- */
+.rp-assign { flex: none; display: flex; align-items: center; justify-content: center; gap: 12px 14px; padding: 12px 12px; flex-wrap: wrap; }
+.rp-assign__group { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.rp-assign__switches { display: flex; gap: 6px; }
+.rp-assign__fs { display: flex; flex-direction: column; align-items: center; width: 72px; }
+
+/* ---- the card on the board (block, node, footswitch, pedal, tone): head → screen → sliders ---- */
+.rp-pcard { width: min(100%, 680px); min-width: 0; border-radius: 12px; }
+.rp-pcard__top { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 8px 10px 0 16px; }
+.rp-pcard__top small { color: var(--rp-far); font: 700 11px/1 var(--rp-font); letter-spacing: .12em; white-space: nowrap; }
+.rp-pcard__top .rp-rail { padding: 0; }
+.rp-pcard__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--card-colour, var(--rp-ink)); font: 800 15px/1 var(--rp-font); letter-spacing: .14em; }
+.rp-pcard[data-enabled="false"] .rp-pcard__title { opacity: .5; }
+.rp-pcard[data-enabled="false"] .rp-params { opacity: .55; }
+.rp-pcard__body { display: flex; flex-direction: column; gap: 16px; padding: 12px 16px 18px; }
+.rp-pcard__screen { width: 100%; }
+.rp-pcard__group h4 { margin: 0 0 10px; color: var(--rp-far); font: 700 11px/1 var(--rp-font); letter-spacing: .12em; text-align: center; }
+.rp-pcard__stack { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.rp-pcard__error { margin: 0; color: var(--rp-hl-ink); font-size: 12px; text-align: center; }
+.rp-pcard__empty { display: grid; place-items: center; min-height: 80px; color: var(--rp-off); }
+.rp-choice--row { flex-direction: row; justify-content: space-between; width: min(100%, 320px); max-width: none; }
+.rp-choice--row .rp-choice__well { width: 220px; }
+.rp-ibtn--sm { width: 26px; height: 26px; font: 600 16px/1 var(--rp-font); }
+.rp-ibtn--danger:hover:not(:disabled) { color: var(--rp-hl-ink); }
+.rp-insp__empty { display: grid; place-items: center; min-height: 160px; width: 100%; color: var(--rp-off); }
+.rp-swatches { display: flex; flex-wrap: nowrap; justify-content: center; gap: 5px; }
+.rp-swatches button { display: grid; place-items: center; flex: 0 1 20px; min-width: 14px; aspect-ratio: 1; height: auto; padding: 0; border: 1px solid var(--rp-m5); border-radius: 50%; background: var(--swatch); color: #111; cursor: pointer; }
+.rp-swatches button.on { outline: 2px solid var(--rp-acc); outline-offset: 1px; }
+
+/* narrower windows */
+@media (max-width: 1280px) {
+  .rp-rig { grid-template-columns: 280px minmax(0, 1fr) 280px; }
+  .rp-assign__fs { width: 62px; }
+  .rp-assign__switches { gap: 2px; }
+}
+
+/* card head content: picture of the original left, the stacked screen right */
+.rp-pcard__now { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 14px; }
+/* Screen column of the card */
+.rp-pcard__screencol { display: grid; gap: 8px; min-width: 0; }
+.rp-pcard__art { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 8px; background: var(--rp-m2); overflow: hidden; }
+.rp-pcard__art img { width: 100%; height: 100%; object-fit: cover; }
+/* doubled NAM: the second lane slides open under the first */
+.rp-lane2 { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .26s var(--rp-ease), opacity .2s var(--rp-ease); opacity: 0; }
+.rp-lane2[data-open="true"] { grid-template-rows: 1fr; opacity: 1; }
+.rp-lane2__inner { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 14px; }
+.rp-lane2[data-open="true"] .rp-lane2__inner { padding-top: 14px; border-top: 1px dashed var(--rp-stroke); }
+.rp-lane2__head { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 10px; }
+
+/* + on an empty slot: category grid, then models with their pictogram and original */
+.rp-picker { position: fixed; z-index: 60; display: flex; flex-direction: column; max-height: min(460px, calc(100vh - 16px)); background: var(--rp-m2); border: 1px solid var(--rp-stroke); border-radius: 10px; box-shadow: 0 18px 48px rgba(0,0,0,.55); overflow: hidden; animation: rp-picker-in .14s var(--rp-ease); }
+@keyframes rp-picker-in { from { opacity: 0; transform: translateY(-4px); } }
+.rp-picker__head { display: flex; align-items: center; gap: 8px; padding: 10px; border-bottom: 1px solid var(--rp-stroke); }
+.rp-picker__slot { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; background: var(--rp-m4); color: var(--rp-ink); font: 700 11px/1 var(--rp-font); }
+.rp-picker__search { flex: 1; display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; border-radius: 6px; background: var(--rp-well); box-shadow: var(--rp-well-shadow); color: var(--rp-far); }
+.rp-picker__search input { flex: 1; min-width: 0; border: 0; background: none; color: var(--rp-ink); font: 500 12px/1 var(--rp-font); outline: none; }
+.rp-picker__cats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 10px; overflow-y: auto; }
+.rp-picker__cat { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; height: 58px; padding: 4px; border: 0; border-radius: 7px; background: var(--cat); color: #fff; font: 700 11px/1.1 var(--rp-font); text-align: center; cursor: pointer; transition: filter .12s var(--rp-ease); }
+.rp-picker__cat[data-fg="dark"] { color: rgba(0,0,0,.8); }
+.rp-picker__cat:hover { filter: brightness(1.12); }
+.rp-picker__models { margin: 0; padding: 6px; list-style: none; overflow-y: auto; }
+.rp-picker__model { display: flex; align-items: center; gap: 10px; width: 100%; padding: 5px 8px; border: 0; border-radius: 6px; background: none; color: var(--rp-ink); text-align: left; cursor: pointer; }
+.rp-picker__model:hover:not(:disabled) { background: var(--rp-tint-2); }
+.rp-picker__model:disabled { opacity: .35; cursor: default; }
+.rp-picker__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rp-picker__text strong { font: 600 12px/1.2 var(--rp-font); }
+.rp-picker__text small { color: var(--rp-far); font: 500 11px/1.2 var(--rp-font); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-picker__none { display: grid; place-items: center; padding: 18px; color: var(--rp-far); }
+.rp-model__pic { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 5px; overflow: hidden; }
+.rp-model__text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.rp-model__text > span, .rp-model__text > small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-model__text > small { color: var(--rp-far); font: 500 11px/1.2 var(--rp-font); }
+
+/* preset tools sit under the selector, right-aligned */
+.rp-pcard__tools { display: flex; justify-content: flex-end; gap: 4px; margin-top: -8px; }
+/* lanes: one centred, or 1ST | 2ND side by side when doubled */
+.rp-lanes { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.rp-lanes[data-double] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rp-lane { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; }
+.rp-lanes[data-double] .rp-lane { padding: 10px 8px 12px; border-radius: 8px; background: var(--rp-tint-1); animation: rp-lane-in .24s var(--rp-ease); }
+@keyframes rp-lane-in { from { opacity: 0; transform: translateX(-8px); } }
+.rp-lane__tag { color: var(--rp-far); font: 700 9px/1 var(--rp-font); /* tiny-label */ letter-spacing: .16em; }
+.rp-lane__screen { width: 100%; }
+.rp-pcard__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px 22px; padding-top: 12px; border-top: 1px solid var(--rp-stroke); }
+
+/* Drop a dragged tile here to take it out of the rig (like the pedal's delete zone) */
+.rp-rig__centre { position: relative; }
+.rp-rig__centre > * { transition: opacity .14s var(--rp-ease), filter .14s var(--rp-ease); }
+.rp-rig__centre[data-dragging] > :not(.rp-zone--chain):not(.rp-trash) { opacity: .28; filter: grayscale(1); pointer-events: none; }
+.rp-trash { position: absolute; left: 50%; top: 58%; z-index: 20; display: grid; place-items: center; width: 220px; height: 120px; margin: -60px 0 0 -110px; border: 2px dashed var(--rp-stroke-bright); border-radius: 12px; background: color-mix(in srgb, var(--rp-m1) 88%, transparent); color: var(--rp-dim); box-shadow: 0 12px 40px rgba(0,0,0,.45); transition: background .12s var(--rp-ease), border-color .12s var(--rp-ease), transform .12s var(--rp-ease); }
+.rp-trash.on { border-style: solid; border-color: var(--rp-hl); background: var(--rp-hl-deep); color: var(--rp-ink); transform: scale(1.04); }
+.rp-pcard__toolsep { width: 1px; height: 16px; margin: 0 4px; background: var(--rp-stroke); }
+
+/* Doubled block: a second card of the same build next to the first, both a little narrower */
+.rp-pcards { display: flex; align-items: stretch; justify-content: center; gap: 14px; width: 100%; max-width: 1040px; }
+.rp-pcards > .rp-pcard { flex: 1 1 0; width: auto; max-width: 520px; }
+.rp-pcard--second { animation: rp-lane-in .24s var(--rp-ease); }
+
+/* Loaded rig renamed in place in the rig list. */
+.rp-rig-list__naming { display: flex; align-items: flex-start; gap: 9px; padding: 4px 8px; border-radius: 5px; background: var(--rp-tint-2); }
+.rp-rig-list__naming > i { margin-top: 7px; }
+.rp-rig-list .rp-namefield { overflow: visible; white-space: normal; }
+
+/* Preset named in place under the card screen (save as / rename). */
+.rp-pcard__naming { display: flex; align-items: flex-start; gap: 8px; padding: 6px 12px; border-radius: 5px; background: linear-gradient(180deg, var(--rp-screen-top), var(--rp-screen-bot)); border: 1px solid var(--rp-screen-edge); }
+.rp-pcard__naming > small { flex: none; width: 76px; margin-top: 8px; color: var(--rp-screen-dim); font: 700 11px/1 var(--rp-font); letter-spacing: .14em; }
+
+/* ---- RIG centre zones: chain (with routing on top) · card · footswitch bar. NAMplify shell, one edge, no shadow ---- */
+.rp-zone, .rp-rig > .rp-side, .rp-rig > .rp-ingr { min-width: 0; border-radius: var(--rp-zone-radius); background: linear-gradient(180deg, var(--rp-shell-top), var(--rp-shell-bot)); box-shadow: inset 0 0 0 1px var(--rp-zone-edge); }
+/* Chain zone: height set by the chain alone */
+.rp-zone--chain { flex: none; display: flex; flex-direction: column; overflow: hidden; }
+.rp-zone--chain > .rp-chain { padding: 18px 16px 16px; }
+
+/* Bank ▲ ▼ between the footswitches and the expression pedals: a narrow well, letter in the middle */
+.rp-bank { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 3px; border-radius: 6px; background: var(--rp-well-bg); box-shadow: var(--rp-well-shadow); }
+.rp-bank button { display: grid; place-items: center; width: 28px; height: 22px; padding: 0; border: 0; border-radius: 4px; background: var(--rp-raise-bg); box-shadow: var(--rp-raise-shadow); color: var(--rp-dim); cursor: pointer; }
+.rp-bank button:hover:not(:disabled) { color: var(--rp-ink); }
+.rp-bank button:disabled { background: transparent; box-shadow: none; color: var(--rp-off); cursor: default; }
+.rp-bank b { color: var(--rp-ink); font: 700 12px/1.3 var(--rp-font); }
+
+/* Pencil on a rig row: rename in place (hover or the loaded row) */
+.rp-rig-list li { position: relative; }
+.rp-rig-list button.rp-rig-list__edit { position: absolute; top: 50%; right: 4px; width: 24px; height: 24px; padding: 0; justify-content: center; transform: translateY(-50%); opacity: 0; color: var(--rp-far); background: none; }
+.rp-rig-list li:hover .rp-rig-list__edit, .rp-rig-list button.on + .rp-rig-list__edit, .rp-rig-list__edit:focus-visible { opacity: 1; }
+.rp-rig-list button.rp-rig-list__edit:hover { color: var(--rp-ink); background: none; }
+.rp-rig-list li > button:first-child { padding-right: 30px; }
+/* Card zone: the card fills the zone, same size, same radius, one outline in the colour of the selection.
+   With nothing to show it is a plain grey zone. */
+.rp-zone.rp-zone--card { background: none; box-shadow: none; }
+.rp-zone--card > .rp-pcard, .rp-zone--card > .rp-pcards { flex: 1 1 auto; width: 100%; max-width: none; min-height: 100%; }
+.rp-zone--card .rp-pcard { max-width: none; border-radius: var(--rp-zone-radius); box-shadow: none; }
+.rp-zone--card > .rp-pcards { gap: var(--rp-zone-gap); }
+.rp-zone--card > .rp-insp__empty { min-height: 100%; border-radius: var(--rp-zone-radius); background: linear-gradient(180deg, var(--rp-shell-top), var(--rp-shell-bot)); box-shadow: inset 0 0 0 1px var(--rp-zone-edge); }
+
+/* Audition on a demo rig of the pedal: the chain zone shows it read-only, marked PREVIEW, with a way back */
+.rp-zone--chain > .rp-zone__chain > .rp-chain { padding: 18px 16px 16px; }
+.rp-zone--preview { box-shadow: inset 0 0 0 1px var(--rp-hl); }
+.rp-zone--preview .rp-zone__chain, .rp-zone--preview .rp-chain-head { opacity: .75; }
+.rp-preview { display: flex; align-items: center; gap: 10px; padding: 8px 10px; box-shadow: inset 0 -1px 0 var(--rp-zone-edge); font: 600 12px/1 var(--rp-font); color: var(--rp-ink); }
+.rp-preview b { color: var(--rp-hl-ink); font: 700 11px/1 var(--rp-font); letter-spacing: .14em; }
+.rp-preview .rp-dot.on { --block-color: var(--rp-hl); }
+.rp-preview span:not(.rp-grow) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Chain tiles flat (NAMplify): no drop shadow from the legacy .block-node, only a thin edge.
+   Selection ring, drag and drop states stay as they are (rules above with higher specificity). */
+.rp-chain .rp-ptile.rp-tile { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tile-colour, #888) 70%, #fff); }
+.rp-chain .rp-ptile.rp-tile[data-enabled="false"] { box-shadow: inset 0 0 0 1px var(--rp-m4); }
+.rp-chain .rp-ptile--add.rp-tile { box-shadow: none; }
+.rp-chain .rp-ptile.rp-tile[data-selected="true"] { box-shadow: 0 0 0 2px var(--rp-m1), 0 0 0 4px var(--tile-colour, var(--rp-dim)); }
+.rp-chain .rp-ptile--add.rp-tile[data-selected="true"] { box-shadow: none; }
+.rp-chain .rp-slot.drop-target .rp-ptile.rp-tile { box-shadow: 0 0 0 2px var(--rp-m1), 0 0 0 4px var(--rp-acc); }
+.rp-chain .rp-io { box-shadow: none; }
+.rp-chain .rp-io.on { box-shadow: 0 0 0 2px var(--rp-m1), 0 0 0 4px var(--rp-acc); }
+/* Footswitch card: the switch's name on the pedal, renamable in place */
+.rp-fsname { align-items: center; gap: 8px; }
+.rp-fsname .rp-choice__name { flex: none; width: 56px; }
+.rp-fsname__text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--rp-ink); font: 700 13px/1 var(--rp-font); letter-spacing: .06em; cursor: text; }
+.rp-fsname .rp-namefield { flex: 1; min-width: 0; }
+
+/* Scene footswitch: switch states, per-block NO CHANGE / ON / OFF and preset, chain marks */
+.rp-scene { display: grid; gap: 8px; width: 100%; }
+.rp-scene__states { display: flex; align-items: center; gap: 6px; }
+.rp-scene__states .rp-choice__name { margin-right: 6px; }
+.rp-scene__state { width: 30px; height: 30px; border: 1px solid var(--rp-edge); border-radius: 999px; background: var(--rp-m2); color: var(--rp-dim); font: 700 12px/1 var(--rp-font); cursor: pointer; }
+.rp-scene__state.on { border-color: var(--card-colour, var(--rp-acc)); background: var(--card-colour, var(--rp-acc)); color: var(--rp-m0); }
+.rp-scene__state--add { display: grid; place-items: center; color: var(--rp-far); }
+.rp-scene__state:disabled { opacity: .5; cursor: default; }
+.rp-scene__blocks { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; max-height: 320px; overflow: auto; }
+.rp-scene__blocks li { display: grid; grid-template-columns: 11px minmax(0, 1fr) minmax(0, 110px) auto; align-items: center; gap: 8px; min-height: 32px; padding: 2px 4px; border-radius: 5px; }
+.rp-scene__blocks li[data-mode="0"] .rp-scene__name { color: var(--rp-dim); }
+.rp-scene__blocks li > i { width: 11px; height: 11px; border-radius: 3px; }
+.rp-scene__name { overflow: hidden; color: var(--rp-ink); font: 600 12px/1.2 var(--rp-font); text-overflow: ellipsis; white-space: nowrap; }
+.rp-scene__preset { overflow: hidden; height: 24px; padding: 0 8px; border: 1px solid var(--rp-m3); border-radius: 5px; background: var(--rp-m1); color: var(--rp-far); font: 500 11px/1 var(--rp-font); text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.rp-scene__preset.set { color: var(--rp-ink); }
+.rp-scene__blocks .rp-wellseg button { min-width: 34px; }
+.rp-scene__presets { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 0 6px 19px; }
+.rp-scene__presets button { height: 24px; padding: 0 9px; border: 1px solid var(--rp-m3); border-radius: 999px; background: none; color: var(--rp-dim); font: 500 11px/1 var(--rp-font); cursor: pointer; }
+.rp-scene__presets button.on, .rp-scene__presets button:hover { border-color: var(--rp-acc); color: var(--rp-ink); }
+.rp-ptile__scene { position: absolute; top: 3px; right: 3px; padding: 2px 4px; border-radius: 3px; font: 700 11px/1 var(--rp-font); letter-spacing: .04em; }
+.rp-ptile__scene[data-scene="on"] { background: var(--rp-m0); color: var(--rp-ink); }
+.rp-ptile__scene[data-scene="off"] { background: var(--rp-m0); color: var(--rp-far); text-decoration: line-through; }
+
+/* The card keeps its outline at the zone edges; only its body scrolls, fading out at the bottom.
+   The extra bottom padding lets the last row scroll clear of the fade. */
+.rp-zone--card.rp-rig__stage { overflow: hidden; }
+.rp-zone--card > .rp-pcard, .rp-zone--card > .rp-pcards, .rp-zone--card > .rp-pcards > .rp-pcard { height: 100%; min-height: 0; }
+.rp-zone--card .rp-pcard > .rp-pcard__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; padding-bottom: 36px;
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 36px), transparent); }
+.rp-zone--card .rp-pcard > .rp-pcard__body::-webkit-scrollbar { display: none; }
+/* Scene switch in the strip: which scene it is (A–F = switch 1–6) and its state; lit while the scene is active */
+.rp-assign__scene { margin-top: 3px; color: var(--rp-far); font: 700 11px/1 var(--rp-font); letter-spacing: .1em; white-space: nowrap; }
+.rp-assign__scene[data-live] { color: var(--rp-acc); }
+
+/* Strip: both banks side by side, a letter in front of each */
+.rp-assign__bank { color: var(--rp-far); font: 700 12px/1 var(--rp-font); letter-spacing: .1em; }
+/* Chain head: which path of the split plays */
+.rp-path { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 6px; background: var(--rp-well-bg); box-shadow: var(--rp-well-shadow); font: 700 11px/1 var(--rp-font); letter-spacing: .1em; }
+.rp-path small { color: var(--rp-far); font: inherit; }
+.rp-path b { color: var(--rp-ink); }
+.rp-path i { color: var(--rp-far); font-style: normal; }
+
+/* Split chain: the path the pedal does not play is dimmed (Path Mix A / B; both play at A+B). */
+.rp-chain[data-path="A"] .rp-slot[data-lane="b"], .rp-chain[data-path="B"] .rp-slot[data-lane="a"] { opacity: .32; filter: grayscale(.7); transition: opacity .16s var(--rp-ease), filter .16s var(--rp-ease); }
+.rp-chain .rp-slot[data-lane="a"], .rp-chain .rp-slot[data-lane="b"] { transition: opacity .16s var(--rp-ease), filter .16s var(--rp-ease); }
+
+/* Hardware Assign head in the footswitch card: TEMPO · MIDI PROG · MIDI SEND, one compact row */
+.rp-hw { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: center; gap: 10px 14px; margin: -4px 0 14px; padding-bottom: 12px; border-bottom: 1px solid var(--rp-stroke); }
+.rp-hw__cell { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.rp-hw__cell > span:first-child { color: var(--rp-far); font: 700 11px/1 var(--rp-font); letter-spacing: .1em; }
+.rp-hw__tempo { display: flex; align-items: center; gap: 8px; }
+.rp-hw__tempo small { color: var(--rp-far); font: 700 11px/1 var(--rp-font); letter-spacing: .08em; }
+.rp-hw__bpm { min-width: 44px; color: var(--rp-dim); font: 700 12px/1 var(--rp-font); font-variant-numeric: tabular-nums; text-align: right; }
+.rp-hw__pick { width: auto; min-width: 64px; }
+.rp-hw__pick select { width: 100%; height: 26px; padding: 0 20px 0 8px; appearance: none; border: 0; background: none; color: var(--rp-screen-text); font: 600 11px/1 var(--rp-font); text-overflow: ellipsis; cursor: pointer; }
+.rp-hw__pick select:disabled { opacity: .5; cursor: default; }
+.rp-hw { margin-bottom: 6px; }
+.rp-hw__cell--send .rp-hw__pick { min-width: 120px; }
+.rp-hw__midi { display: flex; align-items: center; gap: 4px; }
+.rp-hw__num { width: 52px; height: 26px; padding: 0 6px; border-radius: 5px; border: 1px solid var(--rp-screen-edge); background: linear-gradient(180deg, var(--rp-screen-top), var(--rp-screen-bot)); color: var(--rp-screen-text); font: 600 12px/1 var(--rp-font); font-variant-numeric: tabular-nums; text-align: center; }
+.rp-hw__num:focus { outline: none; box-shadow: 0 0 0 2px var(--rp-acc); }
+.rp-ibtn.on { color: var(--rp-acc); }
+
+/* MIDI Out messages: preset row, message 1–5 + TEST, fields, UNASSIGN / APPLY */
+.rp-midi { display: flex; flex-direction: column; gap: 10px; width: min(100%, 460px); margin: 0 auto 12px; padding: 10px; border-radius: 8px; background: var(--rp-well-bg); box-shadow: var(--rp-well-shadow); }
+.rp-midi__presets, .rp-midi__lanes, .rp-midi__foot { display: flex; align-items: center; gap: 6px; }
+.rp-midi__presets .rp-hw__pick, .rp-midi__presets .rp-namefield { flex: 1; }
+.rp-midi__lanes { justify-content: space-between; }
+.rp-midi__dot { display: inline-block; width: 4px; height: 4px; margin-left: 4px; border-radius: 50%; background: var(--rp-acc); vertical-align: middle; }
+.rp-midi__test, .rp-midi__btn { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 12px; border: 0; border-radius: 5px; background: var(--rp-raise-bg); box-shadow: var(--rp-raise-shadow); color: var(--rp-dim); font: 700 11px/1 var(--rp-font); letter-spacing: .1em; cursor: pointer; }
+.rp-midi__test:hover:not(:disabled), .rp-midi__btn:hover:not(:disabled) { color: var(--rp-ink); }
+.rp-midi__test:disabled, .rp-midi__btn:disabled { opacity: .45; cursor: default; }
+.rp-midi__fields { display: flex; flex-wrap: wrap; gap: 8px 10px; }
+.rp-midi__fields label { display: flex; flex-direction: column; gap: 5px; }
+.rp-midi__fields label > span { color: var(--rp-far); font: 700 11px/1 var(--rp-font); letter-spacing: .1em; }
+.rp-midi__fields .rp-hw__pick { min-width: 72px; }
+.rp-midi__fields label:first-child .rp-hw__pick { min-width: 140px; }
+.rp-midi__foot { justify-content: flex-end; }
+.rp-midi__btn--apply { color: var(--rp-ink); box-shadow: var(--rp-raise-shadow), inset 0 0 0 1px var(--rp-acc); }
+.rp-scene__midi { margin-top: 4px; }
+
+/* Expression pedal card: mode + bank, one row per target, Auto-Engage */
+.rp-exp { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.rp-exp__head { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 12px; }
+.rp-exp__lanes { display: flex; flex-direction: column; gap: 6px; width: min(100%, 460px); margin: 0; padding: 0; list-style: none; }
+.rp-exp__lane { display: flex; align-items: center; gap: 6px; min-height: 34px; padding: 4px 8px; border-radius: 6px; background: var(--rp-well-bg); box-shadow: var(--rp-well-shadow); }
+.rp-exp__lane > i { flex: none; width: 4px; height: 18px; border-radius: 2px; background: var(--rp-off); }
+.rp-exp__lane .rp-hw__pick { flex: 1 1 0; min-width: 0; }
+.rp-exp__range { display: flex; align-items: center; gap: 3px; flex: none; }
+.rp-exp__range small { color: var(--rp-far); font: 600 11px/1 var(--rp-font); }
+.rp-exp__range .rp-hw__num { width: 40px; }
+.rp-exp__engage { display: flex; align-items: flex-end; gap: 16px; width: min(100%, 460px); }
+.rp-exp__engage .rp-fader { flex: 1; }
+
+/* The expression pedal in the strip: a small pedal shape, its first target, the live bank */
+.rp-assign__pedals { display: flex; gap: 8px; }
+.rp-exp-pedal { display: flex; align-items: center; gap: 8px; width: 118px; min-width: 0; padding: 6px 8px; border: 0; border-radius: 6px; background: var(--rp-raise-bg); box-shadow: var(--rp-raise-shadow); color: var(--rp-ink); text-align: left; cursor: pointer; }
+.rp-exp-pedal:hover { filter: brightness(1.1); }
+.rp-exp-pedal.selected { box-shadow: var(--rp-raise-shadow), 0 0 0 2px var(--rp-m1), 0 0 0 4px var(--rp-acc); }
+.rp-exp-pedal__shape { flex: none; width: 16px; height: 30px; border-radius: 3px 3px 4px 4px; background: linear-gradient(180deg, var(--rp-m5), var(--rp-m2)); box-shadow: inset 0 0 0 1px var(--rp-switch-edge); }
+.rp-exp-pedal.on .rp-exp-pedal__shape { box-shadow: inset 0 0 0 1px var(--rp-switch-edge), inset 0 -3px 0 var(--rp-ok); }
+.rp-exp-pedal__text { display: grid; gap: 4px; min-width: 0; }
+.rp-exp-pedal__text b { display: flex; align-items: center; gap: 6px; color: var(--rp-dim); font: 700 11px/1 var(--rp-font); letter-spacing: .12em; }
+.rp-exp-pedal__text em { color: var(--rp-acc); font-style: normal; }
+.rp-exp-pedal__text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--rp-off); font: 500 11px/1 var(--rp-font); }
+.rp-exp-pedal.on .rp-exp-pedal__text small { color: var(--rp-dim); }

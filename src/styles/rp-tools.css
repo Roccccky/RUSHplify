@@ -1,0 +1,70 @@
+/* TOOLS: tool list left (rig-list rows), the open tool centre in one zone. Flat NAMplify greys. */
+.rp-tools { display: grid; grid-template-columns: 230px minmax(0, 1fr); height: 100%; min-height: 0; font-family: var(--rp-font); color: var(--rp-ink); }
+.app-workspace:has(> .rp-tools) { height: 100%; padding: 0; }
+.rp-tools__list button em { margin-left: auto; }
+.rp-tools__list button svg { flex: none; color: var(--rp-far); }
+.rp-tools__centre { display: flex; flex-direction: column; gap: var(--rp-zone-gap); min-width: 0; min-height: 0; padding: var(--rp-zone-gap); overflow-y: auto; scrollbar-width: thin; }
+.rp-zone__head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 10px; box-shadow: inset 0 -1px 0 var(--rp-zone-edge); }
+.rp-zone__head .rp-side__select select { width: 104px; }
+
+/* Tuner: one big screen */
+.rp-tuner { display: flex; flex-direction: column; }
+.rp-tuner__screen { position: relative; display: grid; justify-items: center; gap: 6px; margin: 24px auto 28px; width: min(100% - 32px, 720px); padding: 26px 28px 30px; border-radius: 10px; background: linear-gradient(180deg, var(--rp-screen-top), var(--rp-screen-bot)); border: 1px solid var(--rp-screen-edge); }
+.rp-tuner__note { color: var(--rp-screen-dim); font: 800 88px/1 var(--rp-font); letter-spacing: .04em; }
+.rp-tuner__screen[data-signal] .rp-tuner__note { color: var(--rp-warn); }
+.rp-tuner__screen[data-in-tune] .rp-tuner__note { color: var(--rp-ok); }
+.rp-tuner__cents { min-height: 14px; color: var(--rp-screen-dim); font: 700 12px/1 var(--rp-font); letter-spacing: .12em; }
+.rp-tuner__track { position: relative; width: 100%; height: 34px; margin-top: 10px; border-radius: 6px; background: var(--rp-well-bg); box-shadow: var(--rp-well-shadow); }
+.rp-tuner__track i { position: absolute; top: 8px; bottom: 8px; width: 1px; background: var(--rp-m5); }
+.rp-tuner__track i[data-centre] { top: 4px; bottom: 4px; width: 2px; margin-left: -1px; background: var(--rp-dim); }
+.rp-tuner__track b { position: absolute; top: 3px; bottom: 3px; width: 6px; margin-left: -3px; border-radius: 3px; background: var(--rp-warn); transition: left .16s var(--rp-ease); }
+.rp-tuner__screen[data-in-tune] .rp-tuner__track b { background: var(--rp-ok); }
+
+/* Drums: transport + beat LEDs in the head, screen + four footswitches, then knob sections like a block card */
+.rp-drums { display: flex; flex-direction: column; }
+.rp-drums__head { gap: 8px; }
+.rp-drums__play { position: relative; display: grid; place-items: center; align-content: center; gap: 2px; width: 88px; height: 88px; border: 4px solid var(--rp-switch-edge); border-radius: 50%; background: var(--rp-raise-bg); box-shadow: var(--rp-raise-shadow); color: var(--rp-ink); cursor: pointer; transition: background .12s var(--rp-ease), border-color .12s var(--rp-ease); }
+.rp-drums__play span { font: 700 11px/1 var(--rp-font); letter-spacing: .14em; }
+.rp-drums__play svg { margin-left: 3px; }
+.rp-drums__play:hover { border-color: var(--card-colour); }
+.rp-drums__play:active { transform: translateY(1px); }
+.rp-drums__play.on { border-color: var(--card-colour); background: var(--card-colour); color: var(--rp-m0); box-shadow: 0 0 18px color-mix(in srgb, var(--card-colour) 45%, transparent); }
+.rp-drums__play.on svg { margin-left: 0; }
+.rp-drums__bar { min-width: 28px; color: var(--rp-dim); font: 700 12px/1 var(--rp-font); letter-spacing: .1em; text-align: right; }
+.rp-drums__beats { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.rp-drums__beats .rp-dot.on { --block-color: var(--card-colour); }
+.rp-drums__beats .rp-drums__one.on { --block-color: var(--rp-hl); }
+.rp-drums__top { display: grid; grid-template-columns: minmax(260px, 1fr) auto auto; align-items: center; gap: 22px; padding: 14px 14px 6px; }
+.rp-drums__pads { display: flex; gap: 18px; }
+.rp-drums__pads .rp-fsw__disc { width: 60px; height: 60px; border-width: 4px; }
+.rp-drums__pads .rp-fsw__disc::before { width: 44px; height: 44px; }
+.rp-drums__pads .rp-fsw__stripe { width: 50px; }
+.rp-drums > .rp-pgroups { padding: 8px 14px 14px; gap: 8px; }
+.rp-drums .rp-pgroup { flex-basis: calc(var(--units, 1) * 56px + 24px); }
+.rp-drums .rp-pgroup .rp-kwide { flex: 1 1 120px; max-width: 180px; }
+@media (max-width: 900px) { .rp-drums__top { grid-template-columns: 1fr; } }
+
+/* Global EQ: curve in a screen, one section per band */
+.rp-geq { display: flex; flex-direction: column; }
+.rp-geq__screen { margin: 14px 14px 6px; padding: 6px; border-radius: 8px; background: linear-gradient(180deg, var(--rp-screen-top), var(--rp-screen-bot)); border: 1px solid var(--rp-screen-edge); }
+.rp-geq[data-off] .rp-geq__screen { opacity: .55; }
+.rp-geq > .rp-pgroups { padding: 8px 14px 14px; gap: 8px; }
+.rp-geq .rp-pgroup { flex-basis: calc(var(--units, 1) * 56px + 24px); }
+.rp-geq .eq-graph-status > span { display: none; }
+.rp-drums__pads > div { display: contents; }
+
+/* Strobe tuner: two rows in wells like the needle's track (wide slow blocks below, narrow fast ones above),
+   note underneath. Blocks in --strobe-colour (warn while out of tune, ok in tune), dim without a signal. */
+.rp-strobe { display: grid; justify-items: center; gap: 10px; width: 100%; margin-top: 2px; }
+.rp-strobe__rows { display: grid; gap: 6px; width: 100%; }
+.rp-strobe__row { position: relative; height: 34px; border-radius: 6px; overflow: hidden; background: var(--rp-well-bg); box-shadow: var(--rp-well-shadow); }
+.rp-strobe__row:first-child { height: 28px; }
+.rp-strobe__row > span {
+  position: absolute; top: 4px; bottom: 4px; left: calc(-1 * var(--strobe-period)); right: calc(-1 * var(--strobe-period));
+  will-change: transform; opacity: .18; transition: opacity .16s var(--rp-ease);
+  background-image: repeating-linear-gradient(90deg, var(--strobe-colour, var(--rp-warn)) 0 calc(var(--strobe-period) / 2), transparent calc(var(--strobe-period) / 2) var(--strobe-period));
+}
+.rp-strobe[data-lit] .rp-strobe__row > span { opacity: 1; }
+.rp-strobe__readout { display: grid; justify-items: center; gap: 6px; }
+.rp-tuner__screen[data-in-tune] { --strobe-colour: var(--rp-ok); }
+

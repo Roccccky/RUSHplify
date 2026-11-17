@@ -1,0 +1,370 @@
+import { describe, expect, it } from "vitest";
+import { testRigTemplates } from "../data/demo-data";
+import type { HeadRushObject } from "./types";
+import { buildTestRigDevicePlan, testRigBlockProperties, testRigModulePath, testRigNamFileBindings, testRigPlanMismatches } from "./tone-audition-chain";
+
+const moduleTypes = Array.from({ length: 60 }, () => "");
+moduleTypes[0] = "Empty Slot";
+moduleTypes[2] = "Amp";
+moduleTypes[9] = "IR";
+moduleTypes[19] = "Neural Amp Modeler";
+moduleTypes[21] = "Gray Comp";
+moduleTypes[39] = "Spring Reverb";
+moduleTypes[35] = "AIR Reverb";
+moduleTypes[45] = "Tape Echo";
+moduleTypes[46] = "Tape Echo 2";
+moduleTypes[10] = "IR 2";
+
+describe("Tones temporary Test Rig planning", () => {
+  it("ships every reference Test Rig with its intended IR file", () => {
+    const expected = {
+      clean: "CT-Fend312EMFDS-4217B.wav",
+      overdrive: "CT-Mgan112AlnG-42158.wav",
+      distortion: "CT-Brit412V30-160121.wav",
+      lead: "CT-Brit412V30-160121.wav",
+      rhythm: "CT-Bogie412V30-57421.wav",
+      metal: "CT-Bogie412V30-57421.wav",
+    };
+    for (const rig of testRigTemplates) {
+      const parameter = rig.blocks.find((block) => block.category === "ir")?.parameters.find((item) => item.id === "IR");
+      expect(parameter, rig.name).toMatchObject({
+        value: `Impulse Responses/Choptones/${expected[rig.id as keyof typeof expected]}`,
+        sourceProperty: "IR",
+        deviceFile: { fileType: 2, startPath: "Impulse Responses" },
+      });
+    }
+  });
+
+  it("builds a complete exact-slot audition plan for every seeded Test Rig", () => {
+    const names = ["Empty Slot", "Neural Amp Modeler", "IR"];
+    for (const rig of testRigTemplates) for (const block of rig.blocks) {
+      if (["input", "output", "clone", "ir"].includes(block.category)) continue;
+      if (!names.includes(block.model)) names.push(block.model);
+    }
+    const captureId = names.indexOf("Neural Amp Modeler");
+    const irId = names.indexOf("IR");
+
+    for (const rig of testRigTemplates) {
+      const current = Array(14).fill(0);
+      current[4] = captureId;
+      current[5] = irId;
+      const plan = buildTestRigDevicePlan({
+        blocks: rig.blocks,
+        captureType: "amp",
+        source: "Tone3000",
+        remoteKind: "tone-group",
+        moduleTypes: names,
+        currentModuleTypeIds: current,
+        previousModuleTypeIds: Array(14).fill(0),
+      });
+      const expectedSlots = rig.blocks
+        .filter((block) => !["input", "output"].includes(block.category))
+        .map((block) => block.slot)
+        .sort((left, right) => left - right);
+
+      expect(plan, rig.name).toMatchObject({ applied: true, complete: true, captureSlot: 6, skippedBlocks: [] });
+      expect(plan.assignments.map((assignment) => assignment.slot).sort((left, right) => left - right), rig.name).toEqual(expectedSlots);
+      expect(plan.assignments.find((assignment) => assignment.block.category === "ir"), rig.name).toMatchObject({
+        slot: 7,
+        moduleName: "IR",
+        enabled: true,
+      });
+    }
+  });
+
+  it("rebuilds the chain at the exact saved slots around the provider-loaded NAM block", () => {
+    const plan = buildTestRigDevicePlan({
+      blocks: testRigTemplates[0].blocks,
+      captureType: "amp",
+      source: "Tone3000",
+      remoteKind: "tone-group",
+      moduleTypes,
+      currentModuleTypeIds: [55, 0, 0, 0, 19, 9, 0, 0, 0, 0, 0, 0, 0, 0],
+      previousModuleTypeIds: [55, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    });
+
+    expect(plan.applied).toBe(true);
+    expect(plan.complete).toBe(true);
+    expect(plan.captureSlot).toBe(6);
+    expect(plan.clearSlots).toEqual([0, 4]);
+    expect(plan.assignments.map(({ slot, moduleTypeId, enabled }) => ({ slot, moduleTypeId, enabled }))).toEqual([
+      { slot: 1, moduleTypeId: 21, enabled: true },
+      { slot: 5, moduleTypeId: 2, enabled: false },
+      { slot: 6, moduleTypeId: 19, enabled: true },
+      { slot: 7, moduleTypeId: 9, enabled: true },
+      { slot: 9, moduleTypeId: 39, enabled: true },
+    ]);
+  });
+
+  it("fails safely when the temporary capture cannot be identified", () => {
+    const plan = buildTestRigDevicePlan({
+      blocks: testRigTemplates[0].blocks,
+      captureType: "amp",
+      source: "Tone3000",
+      moduleTypes,
+      currentModuleTypeIds: Array(14).fill(0),
+    });
+    expect(plan).toMatchObject({ applied: false, assignments: [], clearSlots: [], captureSlot: null });
+    expect(plan.message).toMatch(/NAM or IR host did not appear/i);
+  });
+
+  it("preserves complete HeadRush Cloud rig demos", () => {
+    const plan = buildTestRigDevicePlan({
+      blocks: testRigTemplates[0].blocks,
+      captureType: "full-rig",
+      source: "HeadRush Cloud",
+      remoteKind: "rig",
+      moduleTypes,
+      currentModuleTypeIds: [19, 9],
+    });
+    expect(plan.applied).toBe(false);
+    expect(plan.complete).toBe(true);
+    expect(plan.message).toMatch(/complete temporary signal chain/i);
+  });
+
+  it("applies a capture-only rig so its NAM output and exact slot are still configured", () => {
+    const capture = structuredClone(testRigTemplates[0].blocks.find((block) => block.name === "Capture slot")!);
+    capture.parameters.find((parameter) => parameter.id === "Output")!.value = 8;
+    const plan = buildTestRigDevicePlan({
+      blocks: [capture], captureType: "amp", source: "Tone3000", moduleTypes,
+      currentModuleTypeIds: [0, 0, 0, 0, 19, 9],
+    });
+    expect(plan).toMatchObject({ applied: true, complete: true, captureSlot: 6, clearSlots: [4, 5] });
+    expect(plan.assignments).toMatchObject([{ capture: true, slot: 6, block: capture }]);
+  });
+
+  it("uses the reflected IR host for an IR-only audition", () => {
+    const plan = buildTestRigDevicePlan({
+      blocks: testRigTemplates[0].blocks,
+      captureType: "ir",
+      source: "HeadRush Cloud",
+      remoteKind: "rig",
+      moduleTypes,
+      currentModuleTypeIds: [0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    });
+    expect(plan.captureSlot).toBe(6);
+    expect(plan.assignments.find((assignment) => assignment.capture)).toMatchObject({ slot: 6, moduleName: "IR", moduleTypeId: 9 });
+    expect(plan.assignments.find((assignment) => assignment.block.name === "IR Loader")).toMatchObject({ slot: 7, moduleName: "IR 2", moduleTypeId: 10, enabled: false });
+  });
+
+  it("allocates separate DSP instances for repeated effect types", () => {
+    const blocks = structuredClone(testRigTemplates[0].blocks);
+    blocks.push(
+      { id: "echo-one", name: "Echo one", model: "Tape Echo", category: "delay", color: "#fff", enabled: true, slot: 2, parameters: [] },
+      { id: "echo-two", name: "Echo two", model: "Tape Echo", category: "delay", color: "#fff", enabled: true, slot: 8, parameters: [] },
+    );
+    const plan = buildTestRigDevicePlan({
+      blocks, captureType: "amp", source: "Tone3000", moduleTypes,
+      currentModuleTypeIds: [0, 0, 0, 0, 19, 9, 0, 0, 0, 0, 0, 0, 0, 0],
+    });
+    expect(plan.assignments.filter((assignment) => assignment.block.category === "delay").map((assignment) => [assignment.moduleTypeId, assignment.moduleName])).toEqual([[45, "Tape Echo"], [46, "Tape Echo 2"]]);
+    expect(plan.complete).toBe(true);
+  });
+
+  it("keeps the provider file source distinct from the selected audition DSP host", () => {
+    const names = [...moduleTypes, "Neural Amp Modeler 2"];
+    const blocks = structuredClone(testRigTemplates[0].blocks);
+    blocks.push({ id: "extra-nam", name: "Extra NAM", model: "Neural Amp Modeler", category: "clone", color: "#fff", enabled: true, slot: 2, parameters: [] });
+    const plan = buildTestRigDevicePlan({ blocks, captureType: "amp", source: "Tone3000", moduleTypes: names, currentModuleTypeIds: [0, 0, 0, 0, 19, 9], namInstance: 2, captureSlot: 8, namPreference: "nam2-lite" });
+    expect(plan).toMatchObject({ complete: true, captureSlot: 8, captureSourceModuleName: "Neural Amp Modeler", captureSourceModuleTypeId: 19 });
+    expect(plan.assignments.find((assignment) => assignment.capture)).toMatchObject({ slot: 8, moduleName: "Neural Amp Modeler 2" });
+    expect(plan.assignments.find((assignment) => assignment.capture)?.block.parameters).toContainEqual(expect.objectContaining({ id: "LightMode", value: true }));
+    expect(plan.assignments.find((assignment) => assignment.block.id === "extra-nam")).toMatchObject({ slot: 2, moduleName: "Neural Amp Modeler", enabled: true });
+  });
+
+  it("fails an unsupported host choice and a third independent NAM without substituting another clone", () => {
+    const names = [...moduleTypes, "Neural Amp Modeler 2", "Amp Clone"];
+    expect(buildTestRigDevicePlan({ blocks: testRigTemplates[0].blocks, captureType: "amp", source: "Tone3000", moduleTypes, currentModuleTypeIds: [19], namInstance: 2 })).toMatchObject({ complete: false, message: expect.stringMatching(/host 2 is not exposed/) });
+    const blocks = structuredClone(testRigTemplates[0].blocks);
+    for (const [index, slot] of [2, 8].entries()) blocks.push({ id: `extra-${index}`, name: `Stacked NAM ${index}`, model: "Neural Amp Modeler", category: "clone", color: "#fff", enabled: true, slot, parameters: [] });
+    const plan = buildTestRigDevicePlan({ blocks, captureType: "amp", source: "Tone3000", moduleTypes: names, currentModuleTypeIds: [19, 9] });
+    expect(plan).toMatchObject({ complete: false, applied: false, skippedBlocks: ["Stacked NAM 1"] });
+    expect(plan.assignments.some((assignment) => assignment.moduleName === "Amp Clone")).toBe(false);
+  });
+
+  it("forces all four doubled NAM lanes to Lite even when the saved preference requests Full", () => {
+    const names = [...moduleTypes, "Neural Amp Modeler 2"];
+    const blocks = structuredClone(testRigTemplates[0].blocks);
+    const capture = blocks.find((block) => block.name === "Capture slot")!;
+    capture.parameters = capture.parameters.filter((parameter) => !["Doubling", "LightMode2"].includes(parameter.id));
+    capture.parameters.push({ id: "Doubling", label: "Doubling", value: true }, { id: "LightMode2", label: "Mode 2", value: false });
+    blocks.push({ id: "extra-nam", name: "Neural Amp Modeler 2", model: "Neural Amp Modeler 2", category: "clone", color: "#fff", enabled: true, slot: 2, parameters: [{ id: "Doubling", label: "Doubling", value: true }, { id: "LightMode", label: "Mode", value: false }, { id: "LightMode2", label: "Mode 2", value: false }] });
+    const plan = buildTestRigDevicePlan({ blocks, captureType: "amp", source: "Tone3000", moduleTypes: names, currentModuleTypeIds: [19, 9], namPreference: "nam2" });
+    for (const assignment of plan.assignments.filter((assignment) => assignment.moduleName.startsWith("Neural Amp Modeler"))) {
+      expect(assignment.block.parameters).toEqual(expect.arrayContaining([expect.objectContaining({ id: "LightMode", value: true }), expect.objectContaining({ id: "LightMode2", value: true })]));
+    }
+    expect(plan.message).toMatch(/All 4 NAM lanes use Lite/);
+    expect(capture.parameters.find((parameter) => parameter.id === "LightMode2")?.value).toBe(false);
+  });
+
+  it("fails honestly when a second DSP instance is unavailable", () => {
+    const singleInstanceCatalogue = [...moduleTypes]; singleInstanceCatalogue[46] = "";
+    const blocks = structuredClone(testRigTemplates[0].blocks);
+    blocks.push(
+      { id: "echo-one", name: "Echo one", model: "Tape Echo", category: "delay", color: "#fff", enabled: true, slot: 2, parameters: [] },
+      { id: "echo-two", name: "Echo two", model: "Tape Echo", category: "delay", color: "#fff", enabled: true, slot: 8, parameters: [] },
+    );
+    const plan = buildTestRigDevicePlan({ blocks, captureType: "amp", source: "Tone3000", moduleTypes: singleInstanceCatalogue, currentModuleTypeIds: [0, 0, 0, 0, 19, 9] });
+    expect(plan).toMatchObject({ complete: false, applied: false, skippedBlocks: ["Echo two"] });
+  });
+
+  it.each([
+    ["IR", "/Evil/Engine/Patch/IR"],
+    ["IR 2", "/Evil/Engine/Patch/IR_2"],
+    ["IR (1024) 2", "/Evil/Engine/Patch/IR_(1024)_2"],
+    ["Neural Amp Modeler 2", "/Evil/Engine/Patch/Neural_Amp_Modeler_2"],
+  ])("maps the %s instance to its reflected object", (name, path) => {
+    expect(testRigModulePath(name)).toBe(path);
+  });
+
+  it("reports every slot that did not match the applied chain", () => {
+    const plan = buildTestRigDevicePlan({
+      blocks: testRigTemplates[0].blocks,
+      captureType: "amp",
+      source: "Tone3000",
+      moduleTypes,
+      currentModuleTypeIds: [0, 0, 0, 0, 19, 9, 0, 0, 0, 0, 0, 0, 0, 0],
+    });
+    expect(testRigPlanMismatches(plan, [0, 0, 0, 0, 19, 9, 0, 35])).toEqual([1, 4, 5, 6, 7, 9]);
+  });
+
+  it("writes only reflected parameters and normalizes their display values", () => {
+    const block = testRigTemplates.find((rig) => rig.id === "lead")!.blocks.find((candidate) => candidate.model === "Dyn Delay")!;
+    const object: HeadRushObject = {
+      meta: { properties: {
+        On: { type: "boolean" },
+        Mix: { type: "number", minimum: 0, maximum: 100 },
+        Delay: { type: "number", minimum: 20, maximum: 2400 },
+        Feedback: { type: "number", minimum: 0, maximum: 100 },
+      } },
+      value: { On: true, Mix: 0.5, Delay: 0.2, Feedback: 0.5, order: ["Mix", "Delay", "Feedback"] },
+    };
+    const properties = testRigBlockProperties(block, object, false);
+    expect(properties.On).toBe(false);
+    expect(properties.Mix).toBeCloseTo(0.2);
+    expect(properties.Delay).toBeCloseTo((390 - 20) / (2400 - 20));
+    expect(properties.Feedback).toBeCloseTo(0.28);
+    expect(properties).not.toHaveProperty("level");
+  });
+
+  it("writes the configured IR file through the reflected device-file property", () => {
+    const block = testRigTemplates[0].blocks.find((candidate) => candidate.category === "ir")!;
+    const object: HeadRushObject = {
+      meta: { properties: {
+        On: { type: "boolean" },
+        IR: { type: "string", "x-options": { fileType: 2, startPath: "Impulse Responses" } },
+      } },
+      value: { On: true, IR: "", order: ["IR"], labels: ["IR File"] },
+    };
+
+    expect(testRigBlockProperties(block, object, true)).toMatchObject({
+      On: true,
+      IR: "Impulse Responses/Choptones/CT-Fend312EMFDS-4217B.wav",
+    });
+  });
+
+  it("normalizes editable NAM input and output while refusing to replace the auditioned NAM file", () => {
+    const block = structuredClone(testRigTemplates[0].blocks.find((candidate) => candidate.name === "Capture slot")!);
+    block.parameters.find((parameter) => parameter.id === "Input")!.value = 6;
+    block.parameters.find((parameter) => parameter.id === "Output")!.value = 8;
+    block.parameters.push({ id: "LoadedClone", sourceProperty: "LoadedClone", label: "NAM file", value: "Models/wrong.nam", writable: true, deviceFile: { fileType: 7, startPath: "Models" } });
+    const object: HeadRushObject = {
+      meta: { properties: {
+        On: { type: "boolean" },
+        Input: { type: "number", minimum: -20, maximum: 20, "x-options": { grid: .1 } },
+        Output: { type: "number", minimum: -40, maximum: 40, "x-options": { grid: .1 } },
+        LoadedClone: { type: "string", "x-options": { fileType: 7, startPath: "Models" } },
+      } },
+      value: { On: true, Input: .5, Output: .5, LoadedClone: "Models/provider.nam", order: ["Input", "Output", "LoadedClone"], labels: ["Input", "Output", "NAM file"] },
+    };
+
+    const properties = testRigBlockProperties(block, object, true);
+    expect(properties.Input).toBeCloseTo(.65);
+    expect(properties.Output).toBeCloseTo(.6);
+    expect(properties).not.toHaveProperty("LoadedClone");
+  });
+
+  it("writes a doubled capture host's independent second file and leaves the provider primary file protected", () => {
+    const block = structuredClone(testRigTemplates[0].blocks.find((candidate) => candidate.name === "Capture slot")!);
+    block.parameters = block.parameters.filter((parameter) => parameter.id !== "Doubling");
+    block.parameters.push({ id: "Doubling", label: "Doubling", value: true });
+    for (const property of ["LoadedClone", "LoadedClone2"]) block.parameters.push({ id: property, label: property, value: `Neural Amp Modeler/${property}.nam`, deviceFile: { fileType: 9, startPath: "Neural Amp Modeler" } });
+    const object: HeadRushObject = { meta: { properties: { On: { type: "boolean" }, Doubling: { type: "boolean" }, LoadedClone: { type: "string", "x-options": { fileType: 9, startPath: "Neural Amp Modeler" } }, LoadedClone2: { type: "string", "x-options": { fileType: 9, startPath: "Neural Amp Modeler" } } } }, value: { On: true, Doubling: true, LoadedClone: "", LoadedClone2: "" } };
+    expect(testRigNamFileBindings(block, object)).toEqual({ LoadedClone2: "Neural Amp Modeler/LoadedClone2.nam" });
+    expect(testRigBlockProperties(block, object, true)).toEqual({ On: true, Doubling: true, LoadedClone2: "Neural Amp Modeler/LoadedClone2.nam" });
+    block.parameters.find((parameter) => parameter.id === "Doubling")!.value = false;
+    expect(testRigNamFileBindings(block, object)).toEqual({});
+    expect(testRigBlockProperties(block, object, true)).not.toHaveProperty("LoadedClone2");
+    block.name = "Neural Amp Modeler";
+    expect(testRigNamFileBindings(block, object)).toEqual({ LoadedClone: "Neural Amp Modeler/LoadedClone.nam" });
+    expect(testRigNamFileBindings(block, { meta: { properties: {} } })).toEqual({});
+  });
+
+  it("translates legacy Normalize to 5.2 OutputMode without overriding an explicit mode", () => {
+    const block = structuredClone(testRigTemplates[0].blocks.find((candidate) => candidate.name === "Capture slot")!);
+    block.parameters = [{ id: "Normalize", label: "Normalize", value: true }];
+    const object: HeadRushObject = { meta: { properties: { On: { type: "boolean" }, OutputMode: { type: "integer", "x-options": { strings: ["Raw", "Calibrated", "Normalize"] } } } }, value: { On: true, OutputMode: 0 } };
+    expect(testRigBlockProperties(block, object, true)).toEqual({ On: true, OutputMode: 2 });
+    block.parameters.push({ id: "OutputMode", label: "Output mode", value: "Calibrated" });
+    expect(testRigBlockProperties(block, object, true)).toEqual({ On: true, OutputMode: 1 });
+    object.value!.disabled = ["OutputMode"];
+    expect(testRigBlockProperties(block, object, true)).toEqual({ On: true });
+    const legacyObject: HeadRushObject = { meta: { properties: { On: { type: "boolean" }, Normalize: { type: "boolean" } } }, value: { On: true, Normalize: false } };
+    block.parameters = [{ id: "OutputMode", label: "Output mode", value: "Normalize" }];
+    expect(testRigBlockProperties(block, legacyObject, true)).toEqual({ On: true, Normalize: true });
+    block.parameters.push({ id: "Normalize", label: "Normalize", value: false });
+    expect(testRigBlockProperties(block, legacyObject, true)).toEqual({ On: true, Normalize: false });
+  });
+
+  it("does not invent properties missing from the reflected device schema", () => {
+    const block = testRigTemplates[0].blocks.find((candidate) => candidate.category === "ir")!;
+    const object: HeadRushObject = { meta: { properties: { On: { type: "boolean" }, Gain: { type: "number", minimum: -48, maximum: 18 } } }, value: { On: true, Gain: .5 } };
+    const properties = testRigBlockProperties(block, object, true);
+    expect(properties).toHaveProperty("On", true);
+    expect(properties).not.toHaveProperty("IR");
+    expect(properties).not.toHaveProperty("LoCut");
+  });
+
+  it("writes the secondary IR channel when that is the reflected file field", () => {
+    const source = structuredClone(testRigTemplates[0].blocks.find((candidate) => candidate.category === "ir")!);
+    const file = source.parameters.find((parameter) => parameter.id === "IR")!;
+    file.id = "IR2"; file.sourceProperty = "IR2";
+    const object: HeadRushObject = { meta: { properties: { On: { type: "boolean" }, IR2: { type: "string", "x-options": { fileType: 2, startPath: "Impulse Responses" } } } }, value: { On: true, IR2: "" } };
+    expect(testRigBlockProperties(source, object, true)).toMatchObject({ On: true, IR2: file.value });
+  });
+
+  it("omits blank alternative IR selectors instead of rejecting a populated template file", () => {
+    const block = structuredClone(testRigTemplates[0].blocks.find((candidate) => candidate.category === "ir")!);
+    const selected = block.parameters.find((parameter) => parameter.id === "IR")!;
+    block.name = "IR";
+    block.parameters.push({ ...selected, id: "IR2", sourceProperty: "IR2", value: "" });
+    const object: HeadRushObject = {
+      meta: { properties: {
+        On: { type: "boolean" },
+        IR: { type: "string", "x-options": { fileType: 2, startPath: "Impulse Responses" } },
+        IR2: { type: "string", "x-options": { fileType: 2, startPath: "Impulse Responses" } },
+      } },
+      value: { On: true, IR: "", IR2: "", order: ["IR", "IR2"], labels: ["IR File", "IR File"] },
+    };
+
+    expect(testRigBlockProperties(block, object, true)).toEqual({ On: true, IR: selected.value });
+  });
+
+  it("writes a populated secondary IR selector without clearing its blank primary alternative", () => {
+    const block = structuredClone(testRigTemplates[0].blocks.find((candidate) => candidate.category === "ir")!);
+    const primary = block.parameters.find((parameter) => parameter.id === "IR")!;
+    const secondary = { ...primary, id: "IR2", sourceProperty: "IR2", value: "Impulse Responses/User/Selected Cab.wav" };
+    primary.value = "not selected";
+    block.parameters.push(secondary);
+    const object: HeadRushObject = {
+      meta: { properties: {
+        On: { type: "boolean" },
+        IR: { type: "string", "x-options": { fileType: 2, startPath: "Impulse Responses" } },
+        IR2: { type: "string", "x-options": { fileType: 2, startPath: "Impulse Responses" } },
+      } },
+      value: { On: true, IR: "", IR2: "", order: ["IR", "IR2"], labels: ["IR File", "IR File"] },
+    };
+
+    expect(testRigBlockProperties(block, object, true)).toEqual({ On: true, IR2: secondary.value });
+  });
+});
