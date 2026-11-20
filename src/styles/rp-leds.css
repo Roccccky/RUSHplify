@@ -1,0 +1,19 @@
+/* Status LEDs are lit or dark, without animation (NAMplify look). Loaded last. */
+
+.connection-orb > i { display: none; }
+.connection-orb > span { width: 8px; height: 8px; background: var(--rp-m5); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .35); }
+.connection-orb--ready > span,
+.connection-orb--demo > span { background: var(--rp-ok); box-shadow: 0 0 6px rgba(76, 175, 109, .65); }
+.connection-orb--syncing > span,
+.connection-orb--discovering > span { background: var(--rp-warn); box-shadow: 0 0 6px rgba(217, 165, 32, .55); }
+.connection-orb--error > span { background: var(--rp-hl); box-shadow: 0 0 6px rgba(208, 66, 58, .6); }
+
+.device-connect-radar > span,
+.signal-flow,
+.device-tuner.active::before,
+.page-loading .brand__mark,
+.drummer-phrase.active .drummer-phrase__pulse { animation: none !important; }
+.device-connect-radar > span,
+.signal-flow,
+.device-tuner.active::before { display: none; }
+.drummer-phrase.active .drummer-phrase__pulse { box-shadow: 0 0 6px rgba(76, 175, 109, .6); }

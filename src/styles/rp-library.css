@@ -1,0 +1,104 @@
+/* LIBRARY: setlist organizer (setlists | setlist | rigs) and the rig list. Flat rows, colour square per rig. */
+.rp-lib {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  font-family: var(--rp-font);
+  color: var(--rp-ink);
+}
+.rp-lib--three { grid-template-columns: 230px minmax(0, 1fr) 300px; gap: var(--rp-zone-gap); padding: var(--rp-zone-gap); }
+.app-workspace:has(> .rp-lib) { height: 100%; padding: 0; }
+
+.rp-lib__col { display: flex; flex-direction: column; min-height: 0; overflow: auto; }
+/* Setlists and rigs sit in cards, like the side columns of the RIG room */
+.rp-lib--three > aside.rp-lib__col { border-radius: var(--rp-zone-radius); background: linear-gradient(180deg, var(--rp-shell-top), var(--rp-shell-bot)); box-shadow: inset 0 0 0 1px var(--rp-zone-edge); }
+.rp-lib__main { padding: 0 12px; }
+.rp-lib__head { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 10px; color: var(--rp-far); font: 700 11px/1 var(--rp-font); letter-spacing: .2em; }
+.rp-lib__head > span:first-child { flex: 1; }
+.rp-lib__head small { color: var(--rp-far); font: 500 11px/1 var(--rp-font); }
+.rp-lib__head--main strong { color: var(--rp-ink); font: 700 18px/1 var(--rp-font); letter-spacing: .16em; text-transform: uppercase; }
+.rp-lib__save { height: 30px; display: inline-flex; align-items: center; gap: 6px; }
+.rp-lib__save--clean { color: var(--rp-off); }
+.rp-lib__search { margin: 8px; }
+.rp-lib__search--inline { margin: 0; width: 220px; }
+
+.rp-lib__list { margin: 0; padding: 6px; list-style: none; }
+.rp-lib__list button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px; border: 0; border-radius: 5px; background: transparent; color: var(--rp-dim); font: 500 12px/1.2 var(--rp-font); text-align: left; cursor: pointer; }
+.rp-lib__list button:hover:not(:disabled) { background: var(--rp-tint-1); color: var(--rp-ink); }
+.rp-lib__list button:disabled { cursor: default; opacity: .6; }
+.rp-lib__list button.on { background: var(--rp-tint-2); color: var(--rp-ink); }
+.rp-lib__list button > span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-lib__list button > small { color: var(--rp-far); font-size: 11px; }
+.rp-lib__list button > svg { color: var(--rp-off); }
+.rp-lib__list button:hover:not(:disabled) > svg { color: var(--rp-ink); }
+.rp-lib__list i { flex: none; width: 11px; height: 11px; border-radius: 3px; }
+/* Rig colour as a small square, like the pedal and the RIG room */
+.rp-lib__rows i { flex: none; width: 11px; height: 11px; border-radius: 3px; }
+
+.rp-lib__rows { margin: 0; padding: 4px 6px; list-style: none; }
+.rp-lib__rows li { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 4px 8px; border-bottom: 1px solid var(--rp-m3); }
+.rp-lib__rows li:hover { background: var(--rp-tint-1); }
+.rp-lib__rows li.current { background: var(--rp-tint-2); }
+.rp-lib__rows li.drop-target { box-shadow: inset 0 -2px 0 var(--rp-acc); }
+.rp-lib__rows li.drag-source { opacity: .4; }
+.rp-lib__rows b { width: 22px; color: var(--rp-far); font: 600 11px/1 var(--rp-font); }
+.rp-lib__rows em { color: var(--rp-far); font: 600 11px/1 var(--rp-font); font-style: normal; letter-spacing: .08em; padding: 0 6px; }
+.rp-lib__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 14px/1.2 var(--rp-font); letter-spacing: .02em; }
+.rp-lib__grip { display: grid; place-items: center; color: var(--rp-off); cursor: grab; touch-action: none; }
+.rp-lib__grip:hover { color: var(--rp-ink); }
+.rp-lib__empty { display: grid; place-items: center; flex: 1; min-height: 120px; color: var(--rp-off); }
+
+@media (max-width: 1100px) {
+  .rp-lib--three { grid-template-columns: 180px minmax(0, 1fr) 220px; }
+}
+
+/* Inline naming (NameField): new setlist under the column head, setlist title, rig rows. */
+.rp-lib__naming { padding: 0 8px 6px; }
+.rp-lib__title { display: flex; min-width: 0; max-width: 60%; }
+.rp-lib__title > span:not(.rp-namefield) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-lib__rows .rp-namefield { flex: 1; }
+.rp-lib__title:has(.rp-namefield) { flex: 0 1 420px; }
+.rp-lib__title .rp-namefield__input { height: 30px; font-size: 15px; letter-spacing: .06em; }
+
+/* BACKUP: restore point facts, changed objects, RESTORE (two clicks), pedal folders */
+.rp-lib__facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px 20px; margin: 6px 10px 18px; }
+.rp-lib__facts div { display: grid; gap: 6px; }
+.rp-lib__facts dt { color: var(--rp-far); font: 700 11px/1 var(--rp-font); letter-spacing: .14em; }
+.rp-lib__facts dd { margin: 0; color: var(--rp-ink); font: 600 13px/1.2 var(--rp-font); }
+.rp-lib__sub { margin: 4px 10px 6px; color: var(--rp-far); font: 700 11px/1 var(--rp-font); letter-spacing: .14em; }
+.rp-lib__rows--plain li { min-height: 34px; }
+.rp-lib__path { color: var(--rp-dim); font: 500 12px/1.2 var(--rp-font); }
+.rp-lib__restore { display: inline-flex; align-items: center; width: auto; gap: 6px; padding: 0 12px; font: 700 11px/1 var(--rp-font); letter-spacing: .12em; }
+.rp-lib__crumb { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-lib__list .rp-dot { flex: none; }
+
+/* Sort + colour filter above a rig list */
+.rp-lib__sort { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin: 0 8px 4px; }
+.rp-lib__main > .rp-lib__sort { margin: 0 0 8px; }
+.rp-lib__families { display: flex; gap: 5px; }
+.rp-lib__families button { width: 16px; height: 16px; padding: 0; border: 0; border-radius: 3px; background: var(--family); opacity: .35; cursor: pointer; transition: opacity .12s var(--rp-ease), box-shadow .12s var(--rp-ease); }
+.rp-lib__families button:hover { opacity: .7; }
+.rp-lib__families button[aria-pressed="true"] { opacity: 1; box-shadow: 0 0 0 2px var(--rp-m0), 0 0 0 3px var(--family); }
+/* SETLISTS rig column: add (row click), load, rename, duplicate, delete. Tools show on hover/focus. */
+.rp-lib__rigs li { display: flex; align-items: center; gap: 2px; border-radius: 5px; }
+.rp-lib__rigs li.current { background: var(--rp-tint-2); }
+.rp-lib__rigs li .rp-lib__add { flex: 1; min-width: 0; }
+.rp-lib__rigs li .rp-namefield, .rp-lib__rigs li .rp-editname { flex: 1; min-width: 0; padding: 4px 8px; }
+.rp-lib__rigtools { display: none; flex: none; align-items: center; }
+.rp-lib__rigtools em { color: var(--rp-far); font: 600 11px/1 var(--rp-font); font-style: normal; letter-spacing: .08em; padding: 0 6px; }
+.rp-lib__rigs li:hover .rp-lib__rigtools, .rp-lib__rigs li:focus-within .rp-lib__rigtools { display: inline-flex; }
+.rp-lib__rigs li:hover .rp-lib__add > svg, .rp-lib__rigs li:focus-within .rp-lib__add > svg { display: none; }
+.rp-lib__rigtools .icon-button { width: 24px; height: 24px; }
+/* LIBRARY · FILES: folders left, files centre, target slots right */
+.rp-files__kind { padding: 0 12px 6px; }
+.rp-files__kind .rp-wellseg { width: 100%; }
+.rp-files .rp-lib__list button > svg:first-child { color: var(--rp-far); }
+.rp-files .rp-lib__rows li { min-height: 40px; cursor: default; }
+.rp-files__where { color: var(--rp-far); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; }
+.rp-files__slots button > span { display: grid; gap: 3px; }
+.rp-files__slots button > span b { color: var(--rp-ink); font-weight: 600; }
+.rp-files__slots button > span small { color: var(--rp-far); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-files__error { margin: 8px 12px; color: var(--rp-far); font-size: 11px; }

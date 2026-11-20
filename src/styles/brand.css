@@ -1,0 +1,23 @@
+/* RUSHplify brand: flat monospace wordmark (NAMplify look), no image files. */
+.rp-brand { display: inline-flex; align-items: center; gap: 10px; color: var(--rp-ink, var(--text)); line-height: 1; }
+.rp-brand__word { font-family: var(--rp-font, ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace); font-weight: 300; letter-spacing: .3em; white-space: nowrap; }
+.rp-brand--sm .rp-brand__word { font-size: 17px; }
+.rp-brand--lg { flex-direction: column; gap: 14px; }
+.rp-brand--lg .rp-brand__word { font-size: 24px; margin-right: -.3em; }
+.rp-brand--lg .rp-mark { width: 48px; height: 48px; }
+.rp-mark { display: block; width: 26px; height: 26px; flex: none; }
+.page-loading .rp-mark { width: 36px; height: 36px; }
+.stage-brand .rp-brand__word { font-size: 13px; }
+
+/* Settings → About */
+.about-panel { display: grid; gap: 22px; max-width: 760px; }
+.about-panel__head { display: grid; justify-items: start; gap: 12px; }
+.about-panel__head .rp-brand--lg { align-items: flex-start; }
+.about-panel__head p, .about-panel__legal { color: var(--muted); font-size: 12px; }
+.about-panel h3 { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.about-credits { list-style: none; display: grid; gap: 8px; padding: 0; margin: 0; }
+.about-credits li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 12px 14px; border: 1px solid var(--line-soft); border-radius: 8px; background: var(--panel-2); }
+.about-credits li span { color: var(--muted); font-size: 12px; text-align: right; }
+.about-credits li p { grid-column: 1 / -1; color: var(--muted); font-size: 12px; margin: 0; }
+.about-credits__links { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 14px; margin-top: 4px; }
+.about-link { display: inline-flex; align-items: center; gap: 4px; color: var(--text); font-size: 12px; }

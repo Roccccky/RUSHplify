@@ -1,0 +1,23 @@
+/* Inline name field: NAMplify well, turquoise focus edge, red edge plus one line when the name is refused. */
+.rp-namefield { position: relative; display: inline-flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 1 auto; width: 100%; }
+.rp-namefield__input {
+  width: 100%; min-width: 0; height: 26px; padding: 0 8px; border: 1px solid transparent; border-radius: 5px;
+  background: var(--rp-well-bg); box-shadow: var(--rp-well-shadow); color: var(--rp-ink);
+  font: 600 12px/1 var(--rp-font); letter-spacing: .02em; outline: none;
+}
+.rp-namefield__input:focus { border-color: rgba(var(--rp-acc-rgb), .7); }
+.rp-namefield__input:disabled { opacity: .6; }
+.rp-namefield--error .rp-namefield__input { border-color: var(--rp-hl); }
+.rp-namefield__error { display: block;  color: var(--rp-hl-ink); font: 500 11px/1.2 var(--rp-font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp-namefield__input { text-transform: none; }
+:root .rp-namefield__input:focus-visible { outline: none; }
+.rp-namefield--error .rp-namefield__input:focus { border-color: var(--rp-hl); }
+/* Suggest wand inside the well, right edge. */
+.rp-namefield--suggest .rp-namefield__input { padding-right: 30px; }
+.rp-namefield__suggest { position: absolute; top: 0; right: 2px; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--rp-far); cursor: pointer; }
+.rp-namefield__suggest:hover:not(:disabled) { color: var(--rp-ink); }
+.rp-namefield__suggest:disabled { opacity: .4; cursor: default; }
+/* Save rig dialog: the shared input with the wand at its right edge. */
+.rp-namefield--dialog .ui-input { width: 100%; padding-right: 32px; }
+.rp-namefield--dialog .rp-namefield__suggest { top: 50%; height: 26px; margin-top: -13px; }
+.rp-namefield--dialog:has(.rp-namefield__error) .rp-namefield__suggest { top: 4px; margin-top: 0; }
